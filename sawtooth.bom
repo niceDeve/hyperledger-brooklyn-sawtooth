@@ -1,0 +1,15 @@
+brooklyn.catalog:
+  items:
+    - classpath://io.brooklyn.hyperledger-sawtooth:sawtooth/catalog.bom
+
+    - id: sawtooth-cluster-template
+      name: "sawtooth-cluster"
+      iconUrl: classpath://io.brooklyn.hyperledger-sawtooth:icon/sawtooth.png
+      itemType: template
+      publish:
+        license_code: APACHE-2.0
+        overview: README.md
+      item:
+        services:
+          - type: sawtooth-cluster
+            name: "sawtooth-cluster"

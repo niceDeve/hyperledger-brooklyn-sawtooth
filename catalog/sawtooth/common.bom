@@ -1,0 +1,169 @@
+brooklyn.catalog:
+  version: "0.1.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
+  publish:
+    description: |
+      Resources for common Apache Brooklyn entities
+    license_code: APACHE-2.0
+
+  items:
+    - id: conditional-entity
+      name: "Conditional Entity"
+      description: |
+        An entity that creates a child only if a configuration key is set
+      itemType: entity
+      item:
+        type: org.apache.brooklyn.entity.stock.ConditionalEntity
+        id: conditional-entity
+
+    - id: child-software-process
+      name: "child-software-process"
+      description: |
+        A child entity that executes commands to run a process
+      itemType: entity
+      item:
+        type: org.apache.brooklyn.entity.software.base.VanillaSoftwareProcess
+        id: child-software-process
+
+    - id: empty-software-process
+      name: "empty-software-process"
+      description: |
+        A startable entity to group child entities
+      itemType: entity
+      item:
+        type: org.apache.brooklyn.entity.software.base.EmptySoftwareProcess
+        id: empty-software-process
+
+    - id: ubuntu-software-process
+      name: "ubuntu-software-process"
+      description: |
+        An entity that executes commands to run a process
+
+        Uses an Ubuntu Xenial Virtual Machine
+      itemType: entity
+      iconUrl: classpath://io.brooklyn.clocker.common:icons/centos.png
+      item:
+        type: org.apache.brooklyn.entity.software.base.VanillaSoftwareProcess
+        id: ubuntu-software-process
+        brooklyn.config:
+          dontRequireTtyForSudo: true
+          provisioning.properties:
+            osFamily: ubuntu
+            osVersionRegex: "16.04"
+
+    - id: sawtooth-docker-engine
+      description: |
+        The Docker engine for running containers.
+      itemType: entity
+      item:
+        name: "sawtooth-docker-engine"
+        type: ubuntu-software-process
+
+        brooklyn.parameters:
+          - name: docker.package
+            description: "Docker Package Name"
+            type: string
+            default: "docker-ce"
+          - name: docker.port
+            description: "Docker Port Number"
+            type: integer
+            default: 2376
+
+        brooklyn.config:
+          shell.env:
+            DOCKER_PACKAGE: $brooklyn:config("docker.package")
+            HOST_ADDRESS: $brooklyn:attributeWhenReady("host.address")
+            DOCKER_PORT: $brooklyn:config("docker.port")
+            ETCD_ADDRESS: $brooklyn:config("etcd.address")
+            ETCD_PORT: $brooklyn:config("etcd.port")
+
+          install.command: |
+            sudo yum -y update
+            sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+            sudo yum-config-manager --add-repo \
+              https://download.docker.com/linux/centos/docker-ce.repo
+            sudo yum-config-manager --enable extras
+            sudo yum-config-manager --enable epel-testing
+            sudo yum install -y ${DOCKER_PACKAGE}
+
+          post.install.command: |
+            echo "[SAW] docker installed"
+
+          customize.command: |
+            sudo tee /etc/docker/daemon.json <<EOF
+            {
+              "debug": true,
+              "hosts": [
+                "unix://var/run/docker.sock",
+                "tcp://0.0.0.0:${DOCKER_PORT}"
+              ],
+              "cluster-store": "etcd://${ETCD_ADDRESS}:${ETCD_PORT}",
+	            "cluster-advertise": "eth0:${DOCKER_PORT}",
+              "labels": [
+                "org.apache.brooklyn.entity=sawtooth-docker-engine"
+              ]
+            }
+            EOF
+            sudo chmod 644 /var/run/docker.sock
+
+          launch.command: |
+            sudo service docker start
+            echo "[HLF] docker started"
+
+          stop.command: |
+            sudo service docker stop
+
+          checkRunning.command: |
+            sudo service docker status
+
+          provisioning.properties:
+            required.ports:
+              [ 22, 4243, 7050, 7051, 7052, 7053, 7054, 7055, 7056, 7057, 7058, 7059, 8080, 8888, 9999 ]
+
+          childStartMode: foreground_late
+
+    - id: sawtooth-docker-container
+      description: |
+        The Docker container for running Hyperledger Sawtooth images.
+      itemType: entity
+      item:
+        type: child-software-process
+        name: "hyperledger-docker-container"
+
+        brooklyn.parameters:
+          - name: sawtooth.version
+            description: "Sawtooth Version"
+            type: string
+            default: "latest"
+          - name: container.name
+            description: "Container Name"
+            type: string
+            constraints:
+              - required
+          - name: image.name
+            description: "Image Name"
+            type: string
+            constraints:
+              - required
+          - name: repository.name
+            description: "Repo Name"
+            type: string
+            default: "scotcoin"
+
+        brooklyn.config:
+          shell.env:
+            ENTITY_ID: $brooklyn:entityId()
+            SAWTOOTH_VERSION: $brooklyn:config("satooth.version")
+            DOCKER_PORT: $brooklyn:config("docker.port")
+            CONTAINER_NAME: $brooklyn:config("container.name")
+            IMAGE_NAME: $brooklyn:config("image.name")
+            REPO_NAME: $brooklyn:config("repository.name")
+
+          post.install.command: |
+            echo "[SAW] container ${ENTITY_ID} installed"
+
+          stop.command: |
+            docker rm -f ${CONTAINER_NAME}
+
+          checkRunning.command: |
+            STATUS=$(docker inspect -f {{.State.Running}} ${CONTAINER_NAME})
+            service docker status && [ "${STATUS}" = "true" ]

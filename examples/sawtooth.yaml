@@ -1,0 +1,5 @@
+location: <add-location-here>
+services:
+  - type: sawtooth-cluster-application
+    brooklyn.config:
+      sawtooth.size: 4

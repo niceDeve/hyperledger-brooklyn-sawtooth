@@ -1,0 +1,357 @@
+brooklyn.catalog:
+  version: "0.1.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
+
+  publish:
+    description: |
+      Entities for Hyperledger Sawtooth.
+    license_code: APACHE-2.0
+    icon_url: classpath://io.brooklyn.hyperledger-sawtooth:icon/hyperledger-sawtooth.png
+
+  items:
+
+    - id: sawtooth-cluster
+      description: |
+        A Hyperledger Sawtooth Cluster
+      itemType: entity
+      item:
+        type: org.apache.brooklyn.entity.stock.BasicApplication
+
+      brooklyn.parameters:
+        - name: sawtooth.size
+          description: "Cluster Size"
+          type: integer
+          default: 2
+          constraints:
+            - required
+
+      brooklyn.children:
+        - type: etcd-node
+          name: "etcd-node"
+          id: etcd-node
+        - type: org.apache.brooklyn.entity.group.DynamicCluster
+          name: "sawtooth-cluster"
+          id: sawtooth-cluster"
+
+          brooklyn.config:
+            initialSize: $brooklyn:config("sawtooth.size")
+
+            firstMemberSpec:
+              $brooklyn:entitySpec:
+                type: sawtooth-server
+                name: "sawtooth-server"
+                id: sawtooth-server
+
+            memberSpec:
+              $brooklyn:entitySpec:
+                type: sawtooth-node
+                name: "sawtooth-node"
+
+                brooklyn.config:
+                  sawtooth.node:
+                    $brooklyn:formatString
+                      - "node%02d"
+                      - $brooklyn:config("cluster.id")
+
+    - id: sawtooth-server
+      description: |
+        A Hyperledger Sawtooth Server
+      itemType: entity
+      item:
+        type: sawtooth-docker-engine
+        name: "sawtooth-server"
+
+        brooklyn.config:
+          sawtooth.node: "example"
+          docker.cluster.etcd: true
+
+        brooklyn.children:
+          - type: influxdb
+            name: "influxdb"
+            id: influxdb
+          - type: grafana
+            name: "grafana"
+            id: grafana
+          - type: telegraf
+            name: "telegraf"
+            id: telegraf
+          - type: sawtooth-rest-api
+            name: "sawtooth-rest-api"
+            id: sawtooth-rest-api
+          - type: sawtooth-validator-main
+            name: "sawtooth-validator-main"
+            id: sawtooth-validator-main
+          - type: sawtooth-settings-tp
+            name: "sawtooth-settings-tp"
+            id: sawtooth-settings-tp
+          - type: sawtooth-identity-tp
+            name: "sawtooth-identity-tp"
+            id: sawtooth-identity-tp
+          - type: sawtooth-identity-tp
+            name: "sawtooth-identity-tp"
+            id: sawtooth-identity-tp
+
+    - id: sawtooth-node
+      description: |
+        A Hyperledger Sawtooth Node
+      itemType: entity
+      item:
+        type: sawtooth-docker-engine
+        name: "sawtooth-node"
+
+        brooklyn.config:
+          sawtooth.node: "example"
+
+        brooklyn.children:
+          - type: sawtooth-validator
+            name: "sawtooth-validator"
+            id: sawtooth-validator
+          - type: sawtooth-settings-tp
+            name: "sawtooth-settings-tp"
+            id: sawtooth-settings-tp
+          - type: sawtooth-identity-tp
+            name: "sawtooth-identity-tp"
+            id: sawtooth-identity-tp
+          - type: sawtooth-identity-tp
+            name: "sawtooth-identity-tp"
+            id: sawtooth-identity-tp
+
+    - id: sawtooth-rest-api
+      description: |
+        The Main Hyperledger Sawtooth REST API Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-rest-api"
+
+        brooklyn.config:
+          container.name: "rest-api"
+          image.name: "sawtooth-rest-api"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004 \
+                -p 8080:8080 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                "sawtooth-rest-api -v \
+                    --connect tcp://validator.${NETWORK}:4004 \
+                    --bind 0.0.0.0:8080 \
+                    --opentsdb-url http://influxdb.${NETWORK}:8086 \
+                    --opentsdb-db metrics"
+
+    - id: sawtooth-validator-main
+      description: |
+        The Main Hyperledger Sawtooth Validator Container.
+        Creates the Genesis block and initialises the blockchain.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-validator-main"
+
+        brooklyn.config:
+          container.name: "validator"
+          image.name: "sawtooth-validator"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004:4004 \
+                -p 8800:8800 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                "bash -c \"\
+                    sawtooth admin keygen --force && \
+                    sawtooth keygen scotcoin --force && \
+                    sawtooth config genesis -k /etc/sawtooth/keys/validator.priv -o genesis.batch && \
+                    sawtooth admin genesis genesis.batch && \
+                    sawtooth-validator -vv \
+                      --endpoint tcp://validator.${NETWORK}:8800 \
+                      --bind component:tcp://eth0:4004 \
+                      --bind network:tcp://eth0:8800 \
+                      --peering dynamic \
+                      --opentsdb-url http://influxdb.${NETWORK}:8086 \
+                      --opentsdb-db metrics \
+                    \""
+
+    - id: sawtooth-validator
+      description: |
+        The Hyperledger Sawtooth Validator Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-validator"
+
+        brooklyn.config:
+          container.name: $brooklyn:config("sawtooth.node")
+          image.name: "sawtooth-validator"
+
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004:4004 \
+                -p 8800:8800 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                "bash -c \"\
+                    sawtooth admin keygen --force && \
+                    sawtooth keygen --force && \
+                    sawtooth-validator -vv \
+                      --endpoint tcp://${NODE}.${NETWORK}:8800 \
+                      --bind component:tcp://eth0:4004 \
+                      --bind network:tcp://eth0:8800 \
+                      --peering dynamic \
+                      --peers tcp://validator.${NETWORK}:8800 \
+                      --seed tcp://validator.${NETWORK}:8800 \
+                      --opentsdb-url http://influxdb.${NETWORK}:8086 \
+                      --opentsdb-db metrics \
+                    \""
+
+    - id: sawtooth-settings-tp
+      description: |
+        The Hyperledger Sawtooth Settings Transaction Processor Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-settings-tp"
+
+        brooklyn.config:
+          container.name: "settings-tp"
+          image.name: "sawtooth-settings-tp"
+
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                "settings-tp -vv -C tcp://validator.${NETWORK}:4004"
+
+    - id: sawtooth-identity-tp
+      description: |
+        The Hyperledger Sawtooth Identity Transaction Processor Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-identity-tp"
+
+        brooklyn.config:
+          container.name: "identity-tp"
+          image.name: "sawtooth-identity-tp"
+
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                "identity-tp -vv -C tcp://validator.${NETWORK}:4004"
+
+    - id: sawtooth-smallbank-tp
+      description: |
+        The Hyperledger Sawtooth Smallbank Transaction Processor Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-smallbank-tp"
+
+        brooklyn.config:
+          container.name: "smallbank-tp"
+          image.name: "sawtooth-smallbank-tp-go"
+
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                "smallbank-tp-go -vv tcp://validator.${NETWORK}:4004"
+
+    - id: influxdb
+      description: |
+        The InfluxDB Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "influxdb"
+
+        brooklyn.config:
+          container.name: "influxdb"
+          image.name: "sawtooth-stats-influxdb"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 8086:8086 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
+
+    - id: grafana
+      description: |
+        The Grafana Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "grafana"
+
+        brooklyn.config:
+          container.name: "grafana"
+          image.name: "sawtooth-stats-grafana"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 3000:3000 \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
+
+    - id: telegraf
+      description: |
+        The Grafana Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "telegraf"
+
+        brooklyn.config:
+          container.name: "telegraf"
+          image.name: "telegraf"
+          repository.name: "library"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                --privileged \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                telegraf --config /config/telegraf.conf

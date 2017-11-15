@@ -1,0 +1,4 @@
+brooklyn.catalog:
+  items:
+    - classpath://io.brooklyn.hyperledger-sawtooth:sawtooth/common.bom
+    - classpath://io.brooklyn.hyperledger-sawtooth:sawtooth/sawtooth.bom
