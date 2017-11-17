@@ -1,4 +1,7 @@
 brooklyn.catalog:
+  version: "0.1.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
+
   items:
-    - classpath://io.brooklyn.hyperledger-sawtooth:sawtooth/common.bom
-    - classpath://io.brooklyn.hyperledger-sawtooth:sawtooth/sawtooth.bom
+    - "classpath://io.brooklyn.etcd.brooklyn-etcd:etcd/etcd.bom"
+    - "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/common.bom"
+    - "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/sawtooth.bom"

@@ -1,68 +1,87 @@
 brooklyn.catalog:
   version: "0.1.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
-
   publish:
     description: |
       Entities for Hyperledger Sawtooth.
     license_code: APACHE-2.0
-    icon_url: classpath://io.brooklyn.hyperledger-sawtooth:icon/hyperledger-sawtooth.png
+    icon_url: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
 
   items:
-
-    - id: sawtooth-cluster
+    - id: sawtooth-cluster-application
       description: |
         A Hyperledger Sawtooth Cluster
       itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
         type: org.apache.brooklyn.entity.stock.BasicApplication
+        name: "sawtooth-cluster-application"
 
-      brooklyn.parameters:
-        - name: sawtooth.size
-          description: "Cluster Size"
-          type: integer
-          default: 2
-          constraints:
-            - required
+        brooklyn.parameters:
+          - name: sawtooth.size
+            description: "Cluster Size"
+            type: integer
+            default: 2
+            constraints:
+              - required
+          - name: sawtooth.network
+            description: "Network Name"
+            type: string
+            default: "sawtooth"
 
-      brooklyn.children:
-        - type: etcd-node
-          name: "etcd-node"
-          id: etcd-node
-        - type: org.apache.brooklyn.entity.group.DynamicCluster
-          name: "sawtooth-cluster"
-          id: sawtooth-cluster"
+        brooklyn.children:
+          - type: etcd-node
+            name: "etcd-node"
+            id: etcd-node
+          - type: sawtooth-server-node
+            name: "sawtooth-server-node"
+            id: sawtooth-server
+            brooklyn.config:
+              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+          - type: sawtooth-validator-cluster
+            name: "sawtooth-validator-cluster"
+            id: sawtooth-validator-cluster"
+            brooklyn.config:
+              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
 
-          brooklyn.config:
-            initialSize: $brooklyn:config("sawtooth.size")
+    - id: sawtooth-validator-cluster
+      description: |
+        A Hyperledger Sawtooth Cluster of Validators
+      itemType: entity
+      item:
+        type: cluster
+        name: "sawtooth-validator-cluster"
 
-            firstMemberSpec:
-              $brooklyn:entitySpec:
-                type: sawtooth-server
-                name: "sawtooth-server"
-                id: sawtooth-server
+        brooklyn.config:
+          cluster.initial.size: $brooklyn:config("sawtooth.size")
+          dynamiccluster.memberspec:
+            $brooklyn:entitySpec:
+              type: sawtooth-validator-node
+              name: "sawtooth-validator-node"
 
-            memberSpec:
-              $brooklyn:entitySpec:
-                type: sawtooth-node
-                name: "sawtooth-node"
+              brooklyn.config:
+                sawtooth.node:
+                  $brooklyn:formatString:
+                    - "node-%03x"
+                    - $brooklyn:config("cluster.member.id")
+                launch.latch: $brooklyn:component("sawtooth-server").attributeWhenReady("service.isUp")
 
-                brooklyn.config:
-                  sawtooth.node:
-                    $brooklyn:formatString
-                      - "node%02d"
-                      - $brooklyn:config("cluster.id")
-
-    - id: sawtooth-server
+    - id: sawtooth-server-node
       description: |
         A Hyperledger Sawtooth Server
       itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
         type: sawtooth-docker-engine
-        name: "sawtooth-server"
+        name: "sawtooth-server-node"
 
         brooklyn.config:
-          sawtooth.node: "example"
-          docker.cluster.etcd: true
+          sawtooth.node: "validator"
+          shell.env:
+            NETWORK: $brooklyn:config("sawtooth.network")
+          post.launch.command:
+            echo "[SAW] Setup default ${NETWORK} overlay network"
+            docker network ls | grep "overlay.*${NETWORK}" ||
+              docker network create --driver=overlay "${NETWORK}"
 
         brooklyn.children:
           - type: influxdb
@@ -71,35 +90,47 @@ brooklyn.catalog:
           - type: grafana
             name: "grafana"
             id: grafana
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("influxdb").attributeWhenReady("service.isUp")
           - type: telegraf
             name: "telegraf"
             id: telegraf
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("grafana").attributeWhenReady("service.isUp")
           - type: sawtooth-rest-api
             name: "sawtooth-rest-api"
             id: sawtooth-rest-api
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("grafana").attributeWhenReady("service.isUp")
           - type: sawtooth-validator-main
-            name: "sawtooth-validator-main"
-            id: sawtooth-validator-main
+            name: "sawtooth-validator"
+            id: sawtooth-validator
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("grafana").attributeWhenReady("service.isUp")
           - type: sawtooth-settings-tp
             name: "sawtooth-settings-tp"
             id: sawtooth-settings-tp
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
           - type: sawtooth-identity-tp
             name: "sawtooth-identity-tp"
             id: sawtooth-identity-tp
-          - type: sawtooth-identity-tp
-            name: "sawtooth-identity-tp"
-            id: sawtooth-identity-tp
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+          - type: sawtooth-smallbank-tp
+            name: "sawtooth-smallbank-tp"
+            id: sawtooth-smallbank-tp
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
 
-    - id: sawtooth-node
+    - id: sawtooth-validator-node
       description: |
         A Hyperledger Sawtooth Node
       itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
         type: sawtooth-docker-engine
-        name: "sawtooth-node"
-
-        brooklyn.config:
-          sawtooth.node: "example"
+        name: "sawtooth-validator-node"
 
         brooklyn.children:
           - type: sawtooth-validator
@@ -108,12 +139,18 @@ brooklyn.catalog:
           - type: sawtooth-settings-tp
             name: "sawtooth-settings-tp"
             id: sawtooth-settings-tp
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
           - type: sawtooth-identity-tp
             name: "sawtooth-identity-tp"
             id: sawtooth-identity-tp
-          - type: sawtooth-identity-tp
-            name: "sawtooth-identity-tp"
-            id: sawtooth-identity-tp
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+          - type: sawtooth-smallbank-tp
+            name: "sawtooth-smallbank-tp"
+            id: sawtooth-smallbank-tp
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
 
     - id: sawtooth-rest-api
       description: |
@@ -127,6 +164,9 @@ brooklyn.catalog:
           container.name: "rest-api"
           image.name: "sawtooth-rest-api"
 
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
           launch.command: |
             docker run \
                 --name=${CONTAINER_NAME} \
@@ -136,11 +176,11 @@ brooklyn.catalog:
                 -p 4004 \
                 -p 8080:8080 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
-                "sawtooth-rest-api -v \
-                    --connect tcp://validator.${NETWORK}:4004 \
+                sawtooth-rest-api -v \
+                    --connect tcp://${NODE}.${NETWORK}:4004 \
                     --bind 0.0.0.0:8080 \
                     --opentsdb-url http://influxdb.${NETWORK}:8086 \
-                    --opentsdb-db metrics"
+                    --opentsdb-db metrics
 
     - id: sawtooth-validator-main
       description: |
@@ -164,7 +204,7 @@ brooklyn.catalog:
                 -p 4004:4004 \
                 -p 8800:8800 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
-                "bash -c \"\
+                bash -c "\
                     sawtooth admin keygen --force && \
                     sawtooth keygen scotcoin --force && \
                     sawtooth config genesis -k /etc/sawtooth/keys/validator.priv -o genesis.batch && \
@@ -176,7 +216,7 @@ brooklyn.catalog:
                       --peering dynamic \
                       --opentsdb-url http://influxdb.${NETWORK}:8086 \
                       --opentsdb-db metrics \
-                    \""
+                    "
 
     - id: sawtooth-validator
       description: |
@@ -202,7 +242,7 @@ brooklyn.catalog:
                 -p 4004:4004 \
                 -p 8800:8800 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
-                "bash -c \"\
+                bash -c "\
                     sawtooth admin keygen --force && \
                     sawtooth keygen --force && \
                     sawtooth-validator -vv \
@@ -214,7 +254,7 @@ brooklyn.catalog:
                       --seed tcp://validator.${NETWORK}:8800 \
                       --opentsdb-url http://influxdb.${NETWORK}:8086 \
                       --opentsdb-db metrics \
-                    \""
+                    "
 
     - id: sawtooth-settings-tp
       description: |
@@ -225,7 +265,10 @@ brooklyn.catalog:
         name: "sawtooth-settings-tp"
 
         brooklyn.config:
-          container.name: "settings-tp"
+          container.name:
+            $brooklyn:formatString:
+              - "settings-tp-%s"
+              - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-settings-tp"
 
           shell.env:
@@ -239,7 +282,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
-                "settings-tp -vv -C tcp://validator.${NETWORK}:4004"
+                settings-tp -vv -C tcp://${NODE}.${NETWORK}:4004
 
     - id: sawtooth-identity-tp
       description: |
@@ -250,7 +293,10 @@ brooklyn.catalog:
         name: "sawtooth-identity-tp"
 
         brooklyn.config:
-          container.name: "identity-tp"
+          container.name:
+            $brooklyn:formatString:
+              - "identity-tp-%s"
+              - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-identity-tp"
 
           shell.env:
@@ -264,7 +310,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
-                "identity-tp -vv -C tcp://validator.${NETWORK}:4004"
+                identity-tp -vv -C tcp://${NODE}.${NETWORK}:4004
 
     - id: sawtooth-smallbank-tp
       description: |
@@ -275,7 +321,10 @@ brooklyn.catalog:
         name: "sawtooth-smallbank-tp"
 
         brooklyn.config:
-          container.name: "smallbank-tp"
+          container.name:
+            $brooklyn:formatString:
+              - "smallbank-tp-%s"
+              - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-smallbank-tp-go"
 
           shell.env:
@@ -289,7 +338,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
-                "smallbank-tp-go -vv tcp://validator.${NETWORK}:4004"
+                smallbank-tp-go -vv tcp://${NODE}.${NETWORK}:4004
 
     - id: influxdb
       description: |
@@ -346,6 +395,16 @@ brooklyn.catalog:
           image.name: "telegraf"
           repository.name: "library"
 
+          shell.env:
+            INSTALL_DIR: $brooklyn:config("install.dir")
+
+          files.install:
+            "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/telegraf.conf": telegraf.conf
+
+          customize.command: |
+            mkdir config
+            mv ${INSTALL_DIR}/telegraf.conf config
+
           launch.command: |
             docker run \
                 --name=${CONTAINER_NAME} \
@@ -353,5 +412,6 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 --privileged \
+                -v "$(pwd)/config:/config" \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
                 telegraf --config /config/telegraf.conf

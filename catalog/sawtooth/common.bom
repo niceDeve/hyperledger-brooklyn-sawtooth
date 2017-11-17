@@ -48,7 +48,7 @@ brooklyn.catalog:
           dontRequireTtyForSudo: true
           provisioning.properties:
             osFamily: ubuntu
-            osVersionRegex: "16.04"
+            imageNameRegex: "xenial-16.04"
 
     - id: sawtooth-docker-engine
       description: |
@@ -67,53 +67,70 @@ brooklyn.catalog:
             description: "Docker Port Number"
             type: integer
             default: 2376
+          - name: cluster.endpoint
+            description: "Cluster Store URL"
+            type: string
 
         brooklyn.config:
           shell.env:
             DOCKER_PACKAGE: $brooklyn:config("docker.package")
             HOST_ADDRESS: $brooklyn:attributeWhenReady("host.address")
+            HOST_SUBNET_ADDRESS: $brooklyn:attributeWhenReady("host.subnet.address")
             DOCKER_PORT: $brooklyn:config("docker.port")
-            ETCD_ADDRESS: $brooklyn:config("etcd.address")
-            ETCD_PORT: $brooklyn:config("etcd.port")
+            ETCD_AUTHORITY: $brooklyn:config("cluster.endpoint")
+            DOCKER_HOST:
+              $brooklyn:formatString:
+                - "tcp://localhost:%d"
+                - $brooklyn:config("docker.port")
 
           install.command: |
-            sudo yum -y update
-            sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-            sudo yum-config-manager --add-repo \
-              https://download.docker.com/linux/centos/docker-ce.repo
-            sudo yum-config-manager --enable extras
-            sudo yum-config-manager --enable epel-testing
-            sudo yum install -y ${DOCKER_PACKAGE}
+            sudo apt-get update -y
+            sudo apt-get install -y \
+              apt-transport-https \
+              ca-certificates \
+              curl \
+              software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository \
+              "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) \
+               stable"
+            sudo apt-get update -y
+            sudo apt-get install -y ${DOCKER_PACKAGE}
 
           post.install.command: |
             echo "[SAW] docker installed"
 
           customize.command: |
-            sudo tee /etc/docker/daemon.json <<EOF
+            sudo systemctl stop docker.service
+            sudo sed -i "s/ExecStart=\/usr\/bin\/dockerd.*$/ExecStart=\/usr\/bin\/dockerd/g" \
+              /lib/systemd/system/docker.service
+            sudo tee -a /etc/docker/daemon.json <<EOF
             {
               "debug": true,
               "hosts": [
-                "unix://var/run/docker.sock",
                 "tcp://0.0.0.0:${DOCKER_PORT}"
               ],
-              "cluster-store": "etcd://${ETCD_ADDRESS}:${ETCD_PORT}",
-	            "cluster-advertise": "eth0:${DOCKER_PORT}",
+              "cluster-store": "${ETCD_AUTHORITY}",
+              "cluster-advertise": "${HOST_SUBNET_ADDRESS}:${DOCKER_PORT}",
               "labels": [
                 "org.apache.brooklyn.entity=sawtooth-docker-engine"
               ]
             }
             EOF
-            sudo chmod 644 /var/run/docker.sock
+            sudo systemctl daemon-reload
+            echo "[SAW] docker configured"
 
           launch.command: |
-            sudo service docker start
-            echo "[HLF] docker started"
+            sudo systemctl start docker.service
+            echo "[SAW] docker started"
 
           stop.command: |
-            sudo service docker stop
+            sudo systemctl stop docker.service
+            echo "[SAW] docker stopped"
 
           checkRunning.command: |
-            sudo service docker status
+            sudo systemctl status --no-pager docker.service
 
           provisioning.properties:
             required.ports:
@@ -151,19 +168,22 @@ brooklyn.catalog:
 
         brooklyn.config:
           shell.env:
-            ENTITY_ID: $brooklyn:entityId()
-            SAWTOOTH_VERSION: $brooklyn:config("satooth.version")
-            DOCKER_PORT: $brooklyn:config("docker.port")
+            ENTITY_ID: $brooklyn:attributeWhenReady("entity.id")
+            SAWTOOTH_VERSION: $brooklyn:config("sawtooth.version")
+            DOCKER_HOST:
+              $brooklyn:formatString:
+                - "tcp://localhost:%d"
+                - $brooklyn:config("docker.port")
             CONTAINER_NAME: $brooklyn:config("container.name")
             IMAGE_NAME: $brooklyn:config("image.name")
             REPO_NAME: $brooklyn:config("repository.name")
+            NETWORK: $brooklyn:config("sawtooth.network")
 
           post.install.command: |
-            echo "[SAW] container ${ENTITY_ID} installed"
+            echo "[SAW] container ${CONTAINER_NAME} installed as ${ENTITY_ID}"
 
           stop.command: |
             docker rm -f ${CONTAINER_NAME}
 
           checkRunning.command: |
-            STATUS=$(docker inspect -f {{.State.Running}} ${CONTAINER_NAME})
-            service docker status && [ "${STATUS}" = "true" ]
+            docker inspect -f {{.State.Running}} ${CONTAINER_NAME}
