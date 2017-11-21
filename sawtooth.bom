@@ -1,5 +1,5 @@
 brooklyn.catalog:
-  version: "0.1.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
+  version: "0.2.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
   publish:
     description: |
       Entities for Hyperledger Sawtooth.
@@ -8,7 +8,7 @@ brooklyn.catalog:
   brooklyn.libraries:
 #    - "https://oss.sonatype.org/service/local/repositories/releases/content/io/brooklyn/etcd/brooklyn-etcd/2.6.0/brooklyn-etcd-2.6.0.jar"
     - "https://oss.sonatype.org/service/local/artifact/maven/redirect?r=snapshots&g=io.brooklyn.etcd&a=brooklyn-etcd&v=2.5.0-SNAPSHOT"
-    - "file:///home/brooklyn/blueprints/lib/sawtooth-0.1.0-SNAPSHOT.jar"
+    - "file:///home/brooklyn/blueprints/lib/sawtooth-0.2.0-SNAPSHOT.jar" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
 
   items:
     - "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/catalog.bom"
