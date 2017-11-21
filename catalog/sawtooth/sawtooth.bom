@@ -412,6 +412,8 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 --privileged \
+                -e "NETWORK=${NETWORK}" \
+                -e "DOCKER_HOST=${DOCKER_HOST}" \
                 -v "$(pwd)/config:/config" \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
                 telegraf --config /config/telegraf.conf

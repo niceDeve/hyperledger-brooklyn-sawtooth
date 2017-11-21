@@ -80,7 +80,8 @@ brooklyn.catalog:
             ETCD_AUTHORITY: $brooklyn:config("cluster.endpoint")
             DOCKER_HOST:
               $brooklyn:formatString:
-                - "tcp://localhost:%d"
+                - "tcp://%s:%d"
+                - $brooklyn:attributeWhenReady("host.subnet.address")
                 - $brooklyn:config("docker.port")
 
           install.command: |
@@ -172,7 +173,8 @@ brooklyn.catalog:
             SAWTOOTH_VERSION: $brooklyn:config("sawtooth.version")
             DOCKER_HOST:
               $brooklyn:formatString:
-                - "tcp://localhost:%d"
+                - "tcp://%s:%d"
+                - $brooklyn:attributeWhenReady("host.subnet.address")
                 - $brooklyn:config("docker.port")
             CONTAINER_NAME: $brooklyn:config("container.name")
             IMAGE_NAME: $brooklyn:config("image.name")
