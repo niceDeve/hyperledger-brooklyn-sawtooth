@@ -123,6 +123,29 @@ brooklyn.catalog:
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
 
+        brooklyn.initializers:
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.grafana.url
+              static.value:
+                $brooklyn:formatString:
+                  - "http://%s:3000"
+                  - $brooklyn:attributeWhenReady("host.address")
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.influxdb.url
+              static.value:
+                $brooklyn:formatString:
+                  - "http://%s:8083"
+                  - $brooklyn:attributeWhenReady("host.address")
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.rest-api.url
+              static.value:
+                $brooklyn:formatString:
+                  - "http://%s:8080"
+                  - $brooklyn:attributeWhenReady("host.address")
+
     - id: sawtooth-validator-node
       description: |
         A Hyperledger Sawtooth Node
@@ -151,6 +174,40 @@ brooklyn.catalog:
             id: sawtooth-smallbank-tp
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+
+    - id: sawtooth-workload-node
+      description: |
+        A Hyperledger Sawtooth Workload Generator Node
+      itemType: entity
+      item:
+        type: sawtooth-docker-engine
+        name: "sawtooth-workload-node"
+
+        brooklyn.parameters:
+          - name: cluster.endpoint
+            description: "Docker Cluster Store URL"
+            type: string
+            constraints:
+              - required
+          - name: sawtooth.network
+            description: "Network Name"
+            type: string
+            default: "sawtooth"
+
+        brooklyn.children:
+          - type: sawtooth-smallbank-workload
+            name: "sawtooth-smallbank-workload"
+            id: sawtooth-smallbank-workload
+            brooklyn.config:
+              sawtooth.workload.key: "sawtooth"
+              sawtooth.workload.filename: "sawtooth"
+              sawtooth.workload.accounts: 10
+              sawtooth.workload.transactions: 10
+              sawtooth.workload.batches: 10
+              sawtooth.rest-api.url:
+                $brooklyn:formatString:
+                  - "http://rest-api.%s:8080/"
+                  - $brooklyn:config("sawtooth.network")
 
     - id: sawtooth-rest-api
       description: |
@@ -206,7 +263,7 @@ brooklyn.catalog:
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
                 bash -c "\
                     sawtooth admin keygen --force && \
-                    sawtooth keygen scotcoin --force && \
+                    sawtooth keygen ${NETWORK} --force && \
                     sawtooth config genesis -k /etc/sawtooth/keys/validator.priv -o genesis.batch && \
                     sawtooth admin genesis genesis.batch && \
                     sawtooth-validator -vv \
@@ -217,6 +274,22 @@ brooklyn.catalog:
                       --opentsdb-url http://influxdb.${NETWORK}:8086 \
                       --opentsdb-db metrics \
                     "
+
+        brooklyn.initializers:
+          - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
+            brooklyn.config:
+              name: sawtooth.key.private
+              description: |
+                The private key for this Sawtooth network
+              command: |
+                docker exec validator bash -c "test -f /root/.sawtooth/keys/${NETWORK}.priv && cat /root/.sawtooth/keys/${NETWORK}.priv"
+          - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
+            brooklyn.config:
+              name: sawtooth.key.public
+              description: |
+                The public key for this Sawtooth network
+              command: |
+                docker exec validator bash -c "test -f /root/.sawtooth/keys/${NETWORK}.pub && cat /root/.sawtooth/keys/${NETWORK}.pub"
 
     - id: sawtooth-validator
       description: |
@@ -358,6 +431,7 @@ brooklyn.catalog:
                 --restart=always \
                 --network ${NETWORK} \
                 -d \
+                -p 8083:8083 \
                 -p 8086:8086 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
 
@@ -417,3 +491,69 @@ brooklyn.catalog:
                 -v "$(pwd)/config:/config" \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
                 telegraf --config /config/telegraf.conf
+
+    - id: sawtooth-smallbank-workload
+      description: |
+        The Hyperledger Sawtooth Smallbank Workload Generator.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-smallbank-workload"
+
+        brooklyn.config:
+          container.name: "smallbank-workload"
+          image.name: "smallbank-workload"
+
+          customise.command: |
+            mkdir data
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -ti \
+                -v "$(pwd)/data:/data"
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
+
+        brooklyn.initializers:
+          - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
+            brooklyn.config:
+              name: "create-transactions"
+              description: "Creates batches of Smallbank transactions for workload testing"
+              parameters:
+                key:
+                  description: "The private key data to sign the transactions with"
+                filename:
+                  description: "The name of the transaction file to create"
+                  defaultValue: "sawtooth"
+                accounts:
+                  description: "Number of accounts to create"
+                  defaultValue: 10
+                transactions:
+                  description: "Number of transactions to create"
+                  defaultValue: 1000
+                batches:
+                  description: "Number of batches to create"
+                  defaultValue: 10
+              command: |
+                echo "${key}" > /data/${filename}.priv
+                docker exec smallbank-workload /bin/create.sh /data/${filename}.priv ${filename} \
+                  ${accounts} ${transactions} ${batches}
+          - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
+            brooklyn.config:
+              name: "submit-transactions"
+              description: "Submit batches of generated Smallbank transactions as workload testing"
+              parameters:
+                filename:
+                  description: "The name of the transaction file to submit"
+                  defaultValue: "sawtooth"
+                endpoint:
+                  description: "The REST API endpoint to use"
+                rate:
+                  description: "Rate of transactions per second"
+                  defaultValue: 10
+              command: |
+                docker exec smallbank-workload /bin/submit.sh ${filename} \
+                  ${endpoint} ${rate}

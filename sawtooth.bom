@@ -4,6 +4,7 @@ brooklyn.catalog:
     description: |
       Entities for Hyperledger Sawtooth.
     license_code: APACHE-2.0
+    overview: README.md
 
   brooklyn.libraries:
 #    - "https://oss.sonatype.org/service/local/repositories/releases/content/io/brooklyn/etcd/brooklyn-etcd/2.6.0/brooklyn-etcd-2.6.0.jar"
@@ -21,7 +22,6 @@ brooklyn.catalog:
       itemType: template
       publish:
         license_code: APACHE-2.0
-        overview: README.md
       item:
         services:
           - type: sawtooth-cluster-application
@@ -29,4 +29,19 @@ brooklyn.catalog:
 
             brooklyn.config:
               sawtooth.size: 2
+              sawtooth.network: "brooklyn"
+
+    - id: sawtooth-workload-template
+      name: "sawtooth-workload"
+      description: |
+        Hyperledger Sawtooth Workload Generator.
+      itemType: template
+      publish:
+        license_code: APACHE-2.0
+      item:
+        services:
+          - type: sawtooth-workload-node
+            name: "sawtooth-workload-node"
+
+            brooklyn.config:
               sawtooth.network: "brooklyn"
