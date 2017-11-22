@@ -4,4 +4,5 @@ brooklyn.catalog:
   items:
     - "classpath://io.brooklyn.etcd.brooklyn-etcd:etcd/etcd.bom"
     - "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/common.bom"
+    - "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/openvpn.bom"
     - "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/sawtooth.bom"
