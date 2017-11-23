@@ -136,7 +136,7 @@ brooklyn.catalog:
               name: sawtooth.rest-api.url
               static.value:
                 $brooklyn:formatString:
-                  - "http://%s:8080"
+                  - "http://%s:8080/blocks"
                   - $brooklyn:attributeWhenReady("host.address")
 
     - id: sawtooth-validator-node
