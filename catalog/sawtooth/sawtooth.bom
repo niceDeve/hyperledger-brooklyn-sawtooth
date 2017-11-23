@@ -9,7 +9,7 @@ brooklyn.catalog:
   items:
     - id: sawtooth-cluster-application
       description: |
-        A Hyperledger Sawtooth Cluster
+        A Hyperledger Sawtooth Cluster.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -45,7 +45,7 @@ brooklyn.catalog:
 
     - id: sawtooth-validator-cluster
       description: |
-        A Hyperledger Sawtooth Cluster of Validators
+        A Hyperledger Sawtooth Cluster of Validators.
       itemType: entity
       item:
         type: cluster
@@ -67,7 +67,7 @@ brooklyn.catalog:
 
     - id: sawtooth-server-node
       description: |
-        A Hyperledger Sawtooth Server
+        A Hyperledger Sawtooth Server.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -133,13 +133,6 @@ brooklyn.catalog:
                   - $brooklyn:attributeWhenReady("host.address")
           - type: org.apache.brooklyn.core.sensor.StaticSensor
             brooklyn.config:
-              name: sawtooth.influxdb.url
-              static.value:
-                $brooklyn:formatString:
-                  - "http://%s:8083"
-                  - $brooklyn:attributeWhenReady("host.address")
-          - type: org.apache.brooklyn.core.sensor.StaticSensor
-            brooklyn.config:
               name: sawtooth.rest-api.url
               static.value:
                 $brooklyn:formatString:
@@ -148,7 +141,7 @@ brooklyn.catalog:
 
     - id: sawtooth-validator-node
       description: |
-        A Hyperledger Sawtooth Node
+        A Hyperledger Sawtooth Node.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -175,13 +168,14 @@ brooklyn.catalog:
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
 
-    - id: sawtooth-workload-node
+    - id: sawtooth-workload-application
       description: |
-        A Hyperledger Sawtooth Workload Generator Node
+        Hyperledger Sawtooth Workload Generator.
       itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
-        type: sawtooth-docker-engine
-        name: "sawtooth-workload-node"
+        type: org.apache.brooklyn.entity.stock.BasicApplication
+        name: "sawtooth-workload-application"
 
         brooklyn.parameters:
           - name: cluster.endpoint
@@ -193,6 +187,19 @@ brooklyn.catalog:
             description: "Network Name"
             type: string
             default: "sawtooth"
+
+        brooklyn.children:
+          - type: sawtooth-workload-node
+            name: "sawtooth-workload-node"
+            id: sawtooth-workload-node
+
+    - id: sawtooth-workload-node
+      description: |
+        A Hyperledger Sawtooth Workload Generator Node.
+      itemType: entity
+      item:
+        type: sawtooth-docker-engine
+        name: "sawtooth-workload-node"
 
         brooklyn.children:
           - type: sawtooth-smallbank-workload
@@ -431,7 +438,6 @@ brooklyn.catalog:
                 --restart=always \
                 --network ${NETWORK} \
                 -d \
-                -p 8083:8083 \
                 -p 8086:8086 \
                 ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
 
@@ -494,7 +500,7 @@ brooklyn.catalog:
 
     - id: sawtooth-smallbank-workload
       description: |
-        The Hyperledger Sawtooth Smallbank Workload Generator.
+        The Hyperledger Sawtooth Smallbank Workload Generator Container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -514,8 +520,9 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -ti \
-                -v "$(pwd)/data:/data"
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
+                -v "$(pwd)/data:/data" \
+                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                bash
 
         brooklyn.initializers:
           - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
@@ -538,7 +545,7 @@ brooklyn.catalog:
                   description: "Number of batches to create"
                   defaultValue: 10
               command: |
-                echo "${key}" > /data/${filename}.priv
+                echo "${key}" | sudo tee -a data/${filename}.priv
                 docker exec smallbank-workload /bin/create.sh /data/${filename}.priv ${filename} \
                   ${accounts} ${transactions} ${batches}
           - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector

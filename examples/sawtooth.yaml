@@ -2,7 +2,7 @@ location: <add-location-here>
 
 services:
   - type: sawtooth-cluster-application
-    name: "satooth-example"
+    name: "sawtooth-example"
 
     brooklyn.config:
       sawtooth.size: 4

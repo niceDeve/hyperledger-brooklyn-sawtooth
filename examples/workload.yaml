@@ -1,0 +1,9 @@
+location: <add-location-here>
+
+services:
+  - type: sawtooth-workload-application
+    name: "sawtooth-workload"
+
+    brooklyn.config:
+      sawtooth.network: "example"
+      cluster.endpoint: "<add-etcd-endpoint-here>"
