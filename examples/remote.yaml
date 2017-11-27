@@ -1,0 +1,11 @@
+location: <add-location-here>
+
+services:
+  - type: sawtooth-remote-application
+    name: "sawtooth-remote"
+
+    brooklyn.config:
+      sawtooth.size: 4
+      sawtooth.network: "example"
+      sawtooth.cluster.name: "remote"
+      cluster.endpoint: "<add-etcd-endpoint-here>"

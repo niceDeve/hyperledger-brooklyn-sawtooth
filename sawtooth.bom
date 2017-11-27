@@ -27,8 +27,27 @@ brooklyn.catalog:
             name: "sawtooth-cluster-application"
 
             brooklyn.config:
-              sawtooth.size: 2
+              sawtooth.size: 4
               sawtooth.network: "brooklyn"
+              sawtooth.cluster.name: "brooklyn"
+
+    - id: sawtooth-remote-cluster-template
+      name: "sawtooth-remote-cluster"
+      description: |
+        Hyperledger Sawtooth Blockchain Remote Cluster.
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
+      itemType: template
+      publish:
+        license_code: APACHE-2.0
+      item:
+        services:
+          - type: sawtooth-remote-cluster-application
+            name: "sawtooth-remote-cluster-application"
+
+            brooklyn.config:
+              sawtooth.size: 3
+              sawtooth.network: "brooklyn"
+              sawtooth.cluster.name: "remote"
 
     - id: sawtooth-workload-template
       name: "sawtooth-workload"

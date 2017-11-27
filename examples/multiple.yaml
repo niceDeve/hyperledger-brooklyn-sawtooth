@@ -1,0 +1,19 @@
+services:
+  - type: sawtooth-cluster-application
+    name: "sawtooth-blockchain"
+    location: <add-main-location-here>
+
+    brooklyn.config:
+      sawtooth.size: 5
+      sawtooth.network: "sawtooth"
+      sawtooth.cluster.name: "sawtooth"
+
+  - type: sawtooth-remote-cluster-application
+    name: "sawtooth-remote"
+    location: <add-remote-location-here>
+
+    brooklyn.config:
+      sawtooth.size: 3
+      sawtooth.network: "sawtooth"
+      sawtooth.cluster.name: "remote"
+      cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")

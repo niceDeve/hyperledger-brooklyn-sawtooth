@@ -7,3 +7,4 @@ services:
     brooklyn.config:
       sawtooth.size: 4
       sawtooth.network: "example"
+      sawtooth.cluster.name: "example"

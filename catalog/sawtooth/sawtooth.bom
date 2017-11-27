@@ -7,6 +7,7 @@ brooklyn.catalog:
     icon_url: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
 
   items:
+
     - id: sawtooth-cluster-application
       description: |
         A Hyperledger Sawtooth Cluster.
@@ -25,6 +26,10 @@ brooklyn.catalog:
               - required
           - name: sawtooth.network
             description: "Network Name"
+            type: string
+            default: "sawtooth"
+          - name: sawtooth.cluster.name
+            description: "Cluster Name"
             type: string
             default: "sawtooth"
 
@@ -61,7 +66,8 @@ brooklyn.catalog:
               brooklyn.config:
                 sawtooth.node:
                   $brooklyn:formatString:
-                    - "node-%03x"
+                    - "%s-%03x"
+                    - $brooklyn:config("sawtooth.cluster.name")
                     - $brooklyn:config("cluster.member.id")
                 launch.latch: $brooklyn:component("sawtooth-server").attributeWhenReady("service.isUp")
 
@@ -206,15 +212,45 @@ brooklyn.catalog:
             name: "sawtooth-smallbank-workload"
             id: sawtooth-smallbank-workload
             brooklyn.config:
-              sawtooth.workload.key: "sawtooth"
-              sawtooth.workload.filename: "sawtooth"
-              sawtooth.workload.accounts: 10
-              sawtooth.workload.transactions: 10
-              sawtooth.workload.batches: 10
               sawtooth.rest-api.url:
                 $brooklyn:formatString:
                   - "http://rest-api.%s:8080/"
                   - $brooklyn:config("sawtooth.network")
+
+    - id: sawtooth-remote-cluster-application
+      description: |
+        A Remote Hyperledger Sawtooth Cluster.
+      itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
+      item:
+        type: org.apache.brooklyn.entity.stock.BasicApplication
+        name: "sawtooth-remote-cluster-application"
+
+        brooklyn.parameters:
+          - name: cluster.endpoint
+            description: "Docker Cluster Store URL"
+            type: string
+            constraints:
+              - required
+          - name: sawtooth.size
+            description: "Cluster Size"
+            type: integer
+            default: 2
+            constraints:
+              - required
+          - name: sawtooth.network
+            description: "Network Name"
+            type: string
+            default: "sawtooth"
+          - name: sawtooth.cluster.name
+            description: "Cluster Name"
+            type: string
+            default: "remote"
+
+        brooklyn.children:
+          - type: sawtooth-validator-cluster
+            name: "sawtooth-validator-cluster"
+            id: sawtooth-validator-cluster"
 
     - id: sawtooth-rest-api
       description: |
