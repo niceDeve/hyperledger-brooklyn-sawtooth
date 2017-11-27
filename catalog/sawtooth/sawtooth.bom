@@ -82,6 +82,7 @@ brooklyn.catalog:
 
         brooklyn.config:
           sawtooth.node: "validator"
+          sawtooth.network.seed: $brooklyn:config("sawtooth.network")
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
           post.launch.command:
@@ -90,6 +91,9 @@ brooklyn.catalog:
               docker network create --driver=overlay "${NETWORK}"
 
         brooklyn.children:
+          - type: openvpn-server
+            name: "openvpn-server"
+            id: openvpn-server
           - type: influxdb
             name: "influxdb"
             id: influxdb
@@ -227,11 +231,6 @@ brooklyn.catalog:
         name: "sawtooth-remote-cluster-application"
 
         brooklyn.parameters:
-          - name: cluster.endpoint
-            description: "Docker Cluster Store URL"
-            type: string
-            constraints:
-              - required
           - name: sawtooth.size
             description: "Cluster Size"
             type: integer
@@ -246,11 +245,37 @@ brooklyn.catalog:
             description: "Cluster Name"
             type: string
             default: "remote"
+          - name: openvpn.config
+            description: "OpenVPN Config"
+            type: string
+            constraints:
+              - required
 
         brooklyn.children:
+          - type: etcd-node
+            name: "etcd-node"
+            id: etcd-node
+          - type: sawtooth-remote-node
+            name: "sawtooth-remote-node"
+            id: sawtooth-remote-node
           - type: sawtooth-validator-cluster
             name: "sawtooth-validator-cluster"
             id: sawtooth-validator-cluster"
+            brooklyn.config:
+              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+
+    - id: sawtooth-remote-node
+      description: |
+        A Hyperledger Sawtooth Remote Node.
+      itemType: entity
+      item:
+        type: sawtooth-docker-engine
+        name: "sawtooth-remote-node"
+
+        brooklyn.children:
+          - type: openvpn-client
+            name: "openvpn-client"
+            id: openvpn-client
 
     - id: sawtooth-rest-api
       description: |
@@ -348,6 +373,7 @@ brooklyn.catalog:
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
+            SEED_NETWORK: $brooklyn:config("sawtooth.network.seed")
 
           launch.command: |
             docker run \
@@ -366,9 +392,9 @@ brooklyn.catalog:
                       --bind component:tcp://eth0:4004 \
                       --bind network:tcp://eth0:8800 \
                       --peering dynamic \
-                      --peers tcp://validator.${NETWORK}:8800 \
-                      --seed tcp://validator.${NETWORK}:8800 \
-                      --opentsdb-url http://influxdb.${NETWORK}:8086 \
+                      --peers tcp://validator.${SEED_NETWORK}:8800 \
+                      --seed tcp://validator.${SEED_NETWORK}:8800 \
+                      --opentsdb-url http://influxdb.${SEED_NETWORK}:8086 \
                       --opentsdb-db metrics \
                     "
 
@@ -500,7 +526,7 @@ brooklyn.catalog:
 
     - id: telegraf
       description: |
-        The Grafana Container.
+        The Telegraf Container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -512,7 +538,7 @@ brooklyn.catalog:
           repository.name: "library"
 
           shell.env:
-            INSTALL_DIR: $brooklyn:config("install.dir")
+            INSTALL_DIR: $brooklyn:attributeWhenReady("install.dir")
 
           files.install:
             "classpath://io.brooklyn.hyperledger.sawtooth:sawtooth/telegraf.conf": telegraf.conf

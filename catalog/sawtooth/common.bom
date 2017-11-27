@@ -166,6 +166,10 @@ brooklyn.catalog:
             description: "Repo Name"
             type: string
             default: "scotcoin"
+          - name: network.debug
+            description: "Network Debug"
+            type: boolean
+            default: false
 
         brooklyn.config:
           shell.env:
@@ -180,9 +184,16 @@ brooklyn.catalog:
             IMAGE_NAME: $brooklyn:config("image.name")
             REPO_NAME: $brooklyn:config("repository.name")
             NETWORK: $brooklyn:config("sawtooth.network")
+            DEBUG: $brooklyn:config("network.debug")
 
           post.install.command: |
             echo "[SAW] container ${CONTAINER_NAME} installed as ${ENTITY_ID}"
+            if ${DEBUG} ; then
+              docker exec ${CONTAINER_NAME} apt-get install -y \
+                iputils-ping \
+                iproute2
+              echo "[SAW] container ${CONTAINER_NAME} network debug tools installed"
+            fi
 
           stop.command: |
             docker rm -f ${CONTAINER_NAME}

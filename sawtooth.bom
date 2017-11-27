@@ -46,8 +46,9 @@ brooklyn.catalog:
 
             brooklyn.config:
               sawtooth.size: 3
-              sawtooth.network: "brooklyn"
+              sawtooth.network: "remote"
               sawtooth.cluster.name: "remote"
+              sawtooth.network.seed: "brooklyn"
 
     - id: sawtooth-workload-template
       name: "sawtooth-workload"

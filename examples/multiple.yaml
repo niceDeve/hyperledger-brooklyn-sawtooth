@@ -14,6 +14,7 @@ services:
 
     brooklyn.config:
       sawtooth.size: 3
-      sawtooth.network: "sawtooth"
+      sawtooth.network: "remote"
       sawtooth.cluster.name: "remote"
-      cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+      sawtooth.network.seed: "sawtooth"
+      openvpn.config: $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
