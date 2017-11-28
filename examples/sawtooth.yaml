@@ -1,5 +1,7 @@
 id: sawtooth-example
 name: "sawtooth-example"
+description: |
+  Example Sawtooth cluster.
 
 location: <add-location-here>
 
@@ -11,4 +13,4 @@ services:
       sawtooth.size: 4
       sawtooth.network: "example"
       sawtooth.network.cidr: "10.0.0.0/24"
-      sawtooth.cluster.name: "example"
+      sawtooth.cluster.name: "sawtooth"

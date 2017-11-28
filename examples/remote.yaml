@@ -1,5 +1,7 @@
 id: sawtooth-remote
 name: "sawtooth-remote"
+description: |
+  Remote Sawtooth cluster.
 
 location: <add-location-here>
 
@@ -11,6 +13,6 @@ services:
       sawtooth.size: 3
       sawtooth.network: "remote"
       sawtooth.network.cidr: "10.0.1.0/24"
-      sawtooth.cluster.name: "remote"
+      sawtooth.cluster.name: "sawtooth"
       sawtooth.seed.network: "example"
       openvpn.config: <add-openvpn-config-here>

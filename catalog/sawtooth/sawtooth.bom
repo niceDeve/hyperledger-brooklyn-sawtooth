@@ -7,7 +7,6 @@ brooklyn.catalog:
     icon_url: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
 
   items:
-
     - id: sawtooth-cluster-application
       description: |
         A Hyperledger Sawtooth Cluster.
@@ -43,7 +42,7 @@ brooklyn.catalog:
             id: etcd-node
           - type: sawtooth-server-node
             name: "sawtooth-server-node"
-            id: sawtooth-server
+            id: sawtooth-server-node
             brooklyn.config:
               cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
           - type: sawtooth-validator-cluster

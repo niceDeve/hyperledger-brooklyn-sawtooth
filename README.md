@@ -5,7 +5,8 @@ This repository contains [Apache Brooklyn](https://brooklyn.apache.org/) bluepri
 
 To install the blueprints, download the Jar and BOM files for the [latest release](https://github.com/cloudsoft/brooklyn-hyperledger-sawtooth/releases/latest) and install them onto a running Brooklyn server. The `sawtooth.bom` file references the Jar archive, so check to be sure it points at the correct location on the filesystem before adding to the catalog.
 
-    $ mkdir lib && cp sawtooth.jar lib/
+    $ mkdir lib
+    $ cp sawtooth.jar lib/
     $ vi sawtooth.bom
     $ br add-catalog sawtooth.bom
 
@@ -22,7 +23,7 @@ Use the [example files](./examples) as templates to create a Sawtooth network bl
           sawtooth.size: 4
           sawtooth.network: "example"
           sawtooth.network.cidr: "10.0.0.0/24"
-          sawtooth.cluster.name: "example
+          sawtooth.cluster.name: "cluster
 
 The blueprint can also contain `sawtooth-remote-cluster-application` entities, to add validators and transaction processors in other locations - or these can be deployed later.
 
@@ -31,4 +32,4 @@ The blueprint can also contain `sawtooth-remote-cluster-application` entities, t
 Once the Sawtooth network is running, check its status using the main Grafana dashboard for metrics, or access the REST API to look up raw blockchain data.
 
 ---
-Copyright 2017 Cloudsoft Corporation; Licensed under the [Apache License, Version 2.0](./LICENSE)
+Copyright 2017 Cloudsoft Corporation; Licensed under the [Apache License, Version 2.0](./LICENSE).

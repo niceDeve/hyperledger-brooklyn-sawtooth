@@ -1,5 +1,7 @@
 id: sawtooth-workload
 name: "sawtooth-workload"
+description: |
+  Sawtooth workload generator for Smallbank.
 
 location: <add-location-here>
 
@@ -9,4 +11,4 @@ services:
 
     brooklyn.config:
       sawtooth.network: "example"
-      cluster.endpoint: "<add-etcd-endpoint-here>"
+      cluster.endpoint: <add-etcd-endpoint-here>

@@ -2,7 +2,7 @@ brooklyn.catalog:
   version: "0.3.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
   publish:
     description: |
-      Entities for Hyperledger Sawtooth.
+      Entities and Applications for Hyperledger Sawtooth.
     license_code: APACHE-2.0
     overview: README.md
 
@@ -28,7 +28,7 @@ brooklyn.catalog:
 
             brooklyn.config:
               sawtooth.size: 4
-              sawtooth.network: "brooklyn"
+              sawtooth.network: "sawtooth"
               sawtooth.network.cidr: "10.0.0.0/24"
               sawtooth.cluster.name: "brooklyn"
 
@@ -49,8 +49,8 @@ brooklyn.catalog:
               sawtooth.size: 3
               sawtooth.network: "remote"
               sawtooth.network.cidr: "10.1.1.0/24"
-              sawtooth.cluster.name: "remote"
-              sawtooth.seed.network: "brooklyn"
+              sawtooth.cluster.name: "brooklyn"
+              sawtooth.seed.network: "sawtooth"
 
     - id: sawtooth-workload-template
       name: "sawtooth-workload"
@@ -66,4 +66,4 @@ brooklyn.catalog:
             name: "sawtooth-workload-application"
 
             brooklyn.config:
-              sawtooth.network: "brooklyn"
+              sawtooth.network: "sawtooth"

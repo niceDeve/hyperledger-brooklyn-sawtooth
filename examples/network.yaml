@@ -1,14 +1,16 @@
-id: sawtooth-multiple
-name: "sawtooth-multiple"
+id: sawtooth-network
+name: "sawtooth-network"
+description: |
+  Sawtooth network split across multiple locations, one central and two remote.
 
 services:
   - type: sawtooth-cluster-application
-    name: "sawtooth-cluster"
+    name: "sawtooth-central-cluster"
     location: <add-main-location-here>
 
     brooklyn.config:
       sawtooth.size: 9
-      sawtooth.network: "sawtooth"
+      sawtooth.network: "central"
       sawtooth.network.cidr: "10.0.0.0/22"
       sawtooth.cluster.name: "sawtooth"
 
@@ -18,11 +20,11 @@ services:
 
     brooklyn.config:
       sawtooth.size: 4
-      sawtooth.network: "remote-one"
+      sawtooth.network: "remote.one"
       sawtooth.network.cidr: "10.1.1.0/24"
-      sawtooth.cluster.name: "remote-one"
+      sawtooth.cluster.name: "sawtooth"
       sawtooth.seed.network:
-        $brooklyn:component("sawtooth-cluster").config("sawtooth.network")
+        $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
 
@@ -32,10 +34,10 @@ services:
 
     brooklyn.config:
       sawtooth.size: 4
-      sawtooth.network: "remote-two"
+      sawtooth.network: "remote.two"
       sawtooth.network.cidr: "10.1.2.0/24"
-      sawtooth.cluster.name: "remote-two"
+      sawtooth.cluster.name: "sawtooth"
       sawtooth.seed.network:
-        $brooklyn:component("sawtooth-cluster").config("sawtooth.network")
+        $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
