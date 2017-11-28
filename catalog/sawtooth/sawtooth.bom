@@ -95,7 +95,7 @@ brooklyn.catalog:
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
             SUBNET: $brooklyn:config("sawtooth.network.cidr")
-          post.launch.command:
+          post.launch.command: |
             echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
             docker network ls | grep "overlay.*${NETWORK}" ||
               docker network create \
@@ -332,7 +332,7 @@ brooklyn.catalog:
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
             SUBNET: $brooklyn:config("sawtooth.network.cidr")
-          post.launch.command:
+          post.launch.command: |
             echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
             docker network ls | grep "overlay.*${NETWORK}" ||
               docker network create \
