@@ -57,6 +57,14 @@ brooklyn.catalog:
                   - "validator.%s"
                   - $brooklyn:config("sawtooth.network")
 
+        brooklyn.enrichers:
+          - type: org.apache.brooklyn.enricher.stock.Propagator
+            brooklyn.config:
+              uniqueTag: rest-api-main-uri-propagator
+              producer: $brooklyn:component("sawtooth-server-node")
+              sensorMapping:
+                $brooklyn:sensor("main.uri"): $brooklyn:sensor("sawtooth.rest-api.uri")
+
     - id: sawtooth-validator-cluster
       description: |
         A Hyperledger Sawtooth Cluster of Validators.
@@ -142,18 +150,25 @@ brooklyn.catalog:
         brooklyn.initializers:
           - type: org.apache.brooklyn.core.sensor.StaticSensor
             brooklyn.config:
-              name: sawtooth.grafana.url
+              name: sawtooth.grafana.uri
               static.value:
                 $brooklyn:formatString:
                   - "http://%s:3000"
                   - $brooklyn:attributeWhenReady("host.address")
           - type: org.apache.brooklyn.core.sensor.StaticSensor
             brooklyn.config:
-              name: sawtooth.rest-api.url
+              name: sawtooth.rest-api.uri
               static.value:
                 $brooklyn:formatString:
                   - "http://%s:8080/blocks"
                   - $brooklyn:attributeWhenReady("host.address")
+
+        brooklyn.enrichers:
+          - type: org.apache.brooklyn.enricher.stock.Propagator
+            brooklyn.config:
+              uniqueTag: grafana-main-uri-propagator
+              sensorMapping:
+                $brooklyn:sensor("main.uri"): $brooklyn:sensor("sawtooth.grafana.uri")
 
     - id: sawtooth-validator-node
       description: |
@@ -229,7 +244,7 @@ brooklyn.catalog:
             name: "sawtooth-smallbank-workload"
             id: sawtooth-smallbank-workload
             brooklyn.config:
-              sawtooth.rest-api.url:
+              sawtooth.rest-api.uri:
                 $brooklyn:formatString:
                   - "http://rest-api.%s:8080/"
                   - $brooklyn:config("sawtooth.network")

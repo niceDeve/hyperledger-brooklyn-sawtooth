@@ -9,7 +9,7 @@ services:
     brooklyn.config:
       sawtooth.size: 9
       sawtooth.network: "sawtooth"
-      sawtooth.network.cidr: "10.0.0.0/24"
+      sawtooth.network.cidr: "10.0.0.0/22"
       sawtooth.cluster.name: "sawtooth"
 
   - type: sawtooth-remote-cluster-application
@@ -19,10 +19,12 @@ services:
     brooklyn.config:
       sawtooth.size: 4
       sawtooth.network: "remote-one"
-      sawtooth.network.cidr: "10.0.1.0/24"
+      sawtooth.network.cidr: "10.1.1.0/24"
       sawtooth.cluster.name: "remote-one"
-      sawtooth.seed.network: $brooklyn:component("sawtooth-cluster").config("sawtooth.network")
-      openvpn.config: $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
+      sawtooth.seed.network:
+        $brooklyn:component("sawtooth-cluster").config("sawtooth.network")
+      openvpn.config:
+        $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
 
   - type: sawtooth-remote-cluster-application
     name: "sawtooth-remote-cluster-two"
@@ -31,7 +33,9 @@ services:
     brooklyn.config:
       sawtooth.size: 4
       sawtooth.network: "remote-two"
-      sawtooth.network.cidr: "10.0.2.0/24"
+      sawtooth.network.cidr: "10.1.2.0/24"
       sawtooth.cluster.name: "remote-two"
-      sawtooth.seed.network: $brooklyn:component("sawtooth-cluster").config("sawtooth.network")
-      openvpn.config: $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
+      sawtooth.seed.network:
+        $brooklyn:component("sawtooth-cluster").config("sawtooth.network")
+      openvpn.config:
+        $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
