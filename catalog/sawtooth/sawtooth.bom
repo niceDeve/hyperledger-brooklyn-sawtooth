@@ -64,7 +64,7 @@ brooklyn.catalog:
               uniqueTag: rest-api-main-uri-propagator
               producer: $brooklyn:component("sawtooth-server-node")
               sensorMapping:
-                $brooklyn:sensor("main.uri"): $brooklyn:sensor("sawtooth.rest-api.uri")
+                $brooklyn:sensor("sawtooth.rest-api.uri"): $brooklyn:sensor("main.uri")
 
     - id: sawtooth-validator-cluster
       description: |
@@ -167,7 +167,7 @@ brooklyn.catalog:
             brooklyn.config:
               uniqueTag: grafana-main-uri-propagator
               sensorMapping:
-                $brooklyn:sensor("main.uri"): $brooklyn:sensor("sawtooth.grafana.uri")
+                $brooklyn:sensor("sawtooth.grafana.uri"): $brooklyn:sensor("main.uri")
 
     - id: sawtooth-validator-node
       description: |

@@ -21,10 +21,6 @@ brooklyn.catalog:
           image.name: "dockvpn"
           repository.name: "jpetazzo"
 
-          shell.env:
-            INSTALL_DIR: $brooklyn:attributeWhenReady("install.dir")
-            RUN_DIR: $brooklyn:attributeWhenReady("run.dir")
-
           launch.command: |
             docker run \
                 --name=${CONTAINER_NAME} \
@@ -42,8 +38,6 @@ brooklyn.catalog:
                 -d \
                 ${CONTAINER_NAME} \
                 serveconfig
-            sleep 30 && \
-              curl --insecure https://localhost:8081 > ${RUN_DIR}/${NETWORK}.ovpn
 
         brooklyn.initializers:
           - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
@@ -52,7 +46,7 @@ brooklyn.catalog:
               description: |
                 The OpenVPN Configuration File
               command: |
-                test -f ${RUN_DIR}/${NETWORK}.ovpn && cat ${RUN_DIR}/${NETWORK}.ovpn"
+                curl --insecure https://localhost:8081/
 
     - id: openvpn-client
       description: |
