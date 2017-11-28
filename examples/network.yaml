@@ -29,6 +29,8 @@ services:
         $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
+      launch.latch:
+        $brooklyn:component("sawtooth-central-cluster").attributeWhenReady("service.isUp")
 
   - type: sawtooth-remote-cluster-application
     id: sawtooth-remote-cluster-two
@@ -44,3 +46,5 @@ services:
         $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
+      launch.latch:
+        $brooklyn:component("sawtooth-central-cluster").attributeWhenReady("service.isUp")

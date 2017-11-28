@@ -45,6 +45,7 @@ brooklyn.catalog:
             id: sawtooth-server-node
             brooklyn.config:
               cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+              launch.latch: $brooklyn:component("etcd-node").attributeWhenReady("service.isUp")
           - type: sawtooth-validator-cluster
             name: "sawtooth-validator-cluster"
             id: sawtooth-validator-cluster"
@@ -55,6 +56,7 @@ brooklyn.catalog:
                 $brooklyn:formatString:
                   - "validator.%s"
                   - $brooklyn:config("sawtooth.network")
+              launch.latch: $brooklyn:component("sawtooth-server-node").attributeWhenReady("service.isUp")
 
         brooklyn.enrichers:
           - type: org.apache.brooklyn.enricher.stock.Propagator
@@ -78,8 +80,6 @@ brooklyn.catalog:
             $brooklyn:entitySpec:
               type: sawtooth-validator-node
               name: "sawtooth-validator-node"
-              brooklyn.config:
-                launch.latch: $brooklyn:component("sawtooth-server").attributeWhenReady("service.isUp")
 
     - id: sawtooth-server-node
       description: |
@@ -171,7 +171,7 @@ brooklyn.catalog:
 
     - id: sawtooth-validator-node
       description: |
-        A Hyperledger Sawtooth Node.
+        A Hyperledger Sawtooth Validator Node.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -295,6 +295,7 @@ brooklyn.catalog:
             id: sawtooth-remote-node
             brooklyn.config:
               cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+              launch.latch: $brooklyn:component("etcd-node").attributeWhenReady("service.isUp")
           - type: sawtooth-validator-cluster
             name: "sawtooth-validator-cluster"
             id: sawtooth-validator-cluster"
@@ -319,6 +320,7 @@ brooklyn.catalog:
                         - "%s-000.%s"
                         - $brooklyn.config("sawtooth.cluster.name")
                         - $brooklyn:config("sawtooth.network")
+              launch.latch: $brooklyn:component("sawtooth-remote-node").attributeWhenReady("service.isUp")
 
     - id: sawtooth-remote-node
       description: |

@@ -42,7 +42,8 @@ brooklyn.catalog:
                 -d \
                 ${CONTAINER_NAME} \
                 serveconfig
-            curl --insecure https://localhost:8081 > ${RUN_DIR}/${NETWORK}.ovpn
+            sleep 30 && \
+              curl --insecure https://localhost:8081 > ${RUN_DIR}/${NETWORK}.ovpn
 
         brooklyn.initializers:
           - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
