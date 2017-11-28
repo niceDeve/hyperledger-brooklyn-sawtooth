@@ -51,6 +51,11 @@ brooklyn.catalog:
             id: sawtooth-validator-cluster"
             brooklyn.config:
               cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+              sawtooth.seed.network: $brooklyn:config("sawtooth.network")
+              sawtooth.seed.validator:
+                $brooklyn:formatString:
+                  - "validator.%s"
+                  - $brooklyn:config("sawtooth.network")
 
     - id: sawtooth-validator-cluster
       description: |
@@ -66,13 +71,7 @@ brooklyn.catalog:
             $brooklyn:entitySpec:
               type: sawtooth-validator-node
               name: "sawtooth-validator-node"
-
               brooklyn.config:
-                sawtooth.node:
-                  $brooklyn:formatString:
-                    - "%s-%03x"
-                    - $brooklyn:config("sawtooth.cluster.name")
-                    - $brooklyn:config("cluster.member.id")
                 launch.latch: $brooklyn:component("sawtooth-server").attributeWhenReady("service.isUp")
 
     - id: sawtooth-server-node
@@ -86,7 +85,6 @@ brooklyn.catalog:
 
         brooklyn.config:
           sawtooth.node: "validator"
-          sawtooth.network.seed: $brooklyn:config("sawtooth.network")
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
             SUBNET: $brooklyn:config("sawtooth.network.cidr")
@@ -165,6 +163,13 @@ brooklyn.catalog:
       item:
         type: sawtooth-docker-engine
         name: "sawtooth-validator-node"
+
+        brooklyn.config:
+          sawtooth.node:
+            $brooklyn:formatString:
+              - "%s-%03x"
+              - $brooklyn:config("sawtooth.cluster.name")
+              - $brooklyn:config("cluster.member.id")
 
         brooklyn.children:
           - type: sawtooth-validator
@@ -274,11 +279,32 @@ brooklyn.catalog:
           - type: sawtooth-remote-node
             name: "sawtooth-remote-node"
             id: sawtooth-remote-node
+            brooklyn.config:
+              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
           - type: sawtooth-validator-cluster
             name: "sawtooth-validator-cluster"
             id: sawtooth-validator-cluster"
             brooklyn.config:
               cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+              dynamiccluster.firstmemberspec:
+                $brooklyn:entitySpec:
+                  type: sawtooth-validator-node
+                  name: "sawtooth-validator-node"
+                  brooklyn.config:
+                    sawtooth.seed.validator:
+                      $brooklyn:formatString:
+                        - "validator.%s"
+                        - $brooklyn:config("sawtooth.seed.network")
+              dynamiccluster.memberspec:
+                $brooklyn:entitySpec:
+                  type: sawtooth-validator-node
+                  name: "sawtooth-validator-node"
+                  brooklyn.config:
+                    sawtooth.seed.validator:
+                      $brooklyn:formatString:
+                        - "%s-000.%s"
+                        - $brooklyn.config("sawtooth.cluster.name")
+                        - $brooklyn:config("sawtooth.network")
 
     - id: sawtooth-remote-node
       description: |
@@ -407,7 +433,8 @@ brooklyn.catalog:
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
-            SEED_NETWORK: $brooklyn:config("sawtooth.network.seed")
+            SEED_NETWORK: $brooklyn:config("sawtooth.seed.network")
+            SEED_VALIDATOR: $brooklyn:config("sawtooth.seed.validator")
 
           launch.command: |
             docker run \
@@ -426,8 +453,8 @@ brooklyn.catalog:
                       --bind component:tcp://eth0:4004 \
                       --bind network:tcp://eth0:8800 \
                       --peering dynamic \
-                      --peers tcp://validator.${SEED_NETWORK}:8800 \
-                      --seed tcp://validator.${SEED_NETWORK}:8800 \
+                      --peers tcp://${SEED_VALIDATOR}:8800 \
+                      --seed tcp://${SEED_VALIDATOR}:8800 \
                       --opentsdb-url http://influxdb.${SEED_NETWORK}:8086 \
                       --opentsdb-db metrics"
 

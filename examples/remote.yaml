@@ -12,5 +12,5 @@ services:
       sawtooth.network: "remote"
       sawtooth.network.cidr: "10.0.1.0/24"
       sawtooth.cluster.name: "remote"
-      sawtooth.network.seed: "example"
+      sawtooth.seed.network: "example"
       openvpn.config: <add-openvpn-config-here>

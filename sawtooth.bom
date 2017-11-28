@@ -50,7 +50,7 @@ brooklyn.catalog:
               sawtooth.network: "remote"
               sawtooth.network.cidr: "10.1.1.0/24"
               sawtooth.cluster.name: "remote"
-              sawtooth.network.seed: "brooklyn"
+              sawtooth.seed.network: "brooklyn"
 
     - id: sawtooth-workload-template
       name: "sawtooth-workload"
