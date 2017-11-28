@@ -7,6 +7,7 @@ location: <add-location-here>
 
 services:
   - type: sawtooth-remote-cluster-application
+    id: sawtooth-remote-cluster
     name: "sawtooth-remote-cluster"
 
     brooklyn.config:

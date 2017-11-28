@@ -5,6 +5,7 @@ description: |
 
 services:
   - type: sawtooth-cluster-application
+    id: sawtooth-central-cluster
     name: "sawtooth-central-cluster"
     location: <add-main-location-here>
 
@@ -15,6 +16,7 @@ services:
       sawtooth.cluster.name: "sawtooth"
 
   - type: sawtooth-remote-cluster-application
+    id: sawtooth-remote-cluster-one
     name: "sawtooth-remote-cluster-one"
     location: <add-remote-location-here>
 
@@ -29,6 +31,7 @@ services:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
 
   - type: sawtooth-remote-cluster-application
+    id: sawtooth-remote-cluster-two
     name: "sawtooth-remote-cluster-two"
     location: <add-remote-location-here>
 
