@@ -1,11 +1,16 @@
+id: sawtooth-remote
+name: "sawtooth-remote"
+
 location: <add-location-here>
 
 services:
-  - type: sawtooth-remote-application
-    name: "sawtooth-remote"
+  - type: sawtooth-remote-cluster-application
+    name: "sawtooth-remote-cluster"
 
     brooklyn.config:
-      sawtooth.size: 4
-      sawtooth.network: "example"
+      sawtooth.size: 3
+      sawtooth.network: "remote"
+      sawtooth.network.cidr: "10.0.1.0/24"
       sawtooth.cluster.name: "remote"
-      cluster.endpoint: "<add-etcd-endpoint-here>"
+      sawtooth.network.seed: "example"
+      openvpn.config: <add-openvpn-config-here>

@@ -1,10 +1,14 @@
+id: sawtooth-example
+name: "sawtooth-example"
+
 location: <add-location-here>
 
 services:
   - type: sawtooth-cluster-application
-    name: "sawtooth-example"
+    name: "sawtooth-cluster"
 
     brooklyn.config:
       sawtooth.size: 4
       sawtooth.network: "example"
+      sawtooth.network.cidr: "10.0.0.0/24"
       sawtooth.cluster.name: "example"

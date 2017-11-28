@@ -17,7 +17,7 @@ brooklyn.catalog:
         name: "openvpn-server"
 
         brooklyn.config:
-          container.name: "openvpn"
+          container.name: "openvpn-server"
           image.name: "dockvpn"
           repository.name: "jpetazzo"
 
@@ -40,7 +40,8 @@ brooklyn.catalog:
           post.launch.command: |
             docker exec \
                 -d \
-                ${CONTAINER_NAME} serveconfig
+                ${CONTAINER_NAME} \
+                serveconfig
             curl --insecure https://localhost:8081 > ${RUN_DIR}/${NETWORK}.ovpn
 
         brooklyn.initializers:
@@ -58,5 +59,46 @@ brooklyn.catalog:
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/openvpn.png"
       itemtype: entity
       item:
-        type: empty-software-process
+        type: sawtooth-docker-container
         name: "openvpn-client"
+
+        brooklyn.config:
+          container.name: "openvpn-client"
+          image.name: "ubuntu"
+          repository.name: "library"
+          image.version: "xenial"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -ti \
+                ${IMAGE} \
+                bash
+
+    - id: openvpn-router
+      description: |
+        OpenVPN Client
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/openvpn.png"
+      itemtype: entity
+      item:
+        type: sawtooth-docker-container
+        name: "openvpn-router"
+
+        brooklyn.config:
+          container.name: "openvpn-router"
+          image.name: "ubuntu"
+          repository.name: "library"
+          image.version: "xenial"
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -ti \
+                ${IMAGE} \
+                bash

@@ -148,10 +148,6 @@ brooklyn.catalog:
         name: "hyperledger-docker-container"
 
         brooklyn.parameters:
-          - name: sawtooth.version
-            description: "Sawtooth Version"
-            type: string
-            default: "latest"
           - name: container.name
             description: "Container Name"
             type: string
@@ -162,6 +158,10 @@ brooklyn.catalog:
             type: string
             constraints:
               - required
+          - name: image.version
+            description: "Image Version"
+            type: string
+            default: "latest"
           - name: repository.name
             description: "Repo Name"
             type: string
@@ -174,7 +174,6 @@ brooklyn.catalog:
         brooklyn.config:
           shell.env:
             ENTITY_ID: $brooklyn:attributeWhenReady("entity.id")
-            SAWTOOTH_VERSION: $brooklyn:config("sawtooth.version")
             DOCKER_HOST:
               $brooklyn:formatString:
                 - "tcp://%s:%d"
@@ -182,7 +181,15 @@ brooklyn.catalog:
                 - $brooklyn:config("docker.port")
             CONTAINER_NAME: $brooklyn:config("container.name")
             IMAGE_NAME: $brooklyn:config("image.name")
+            IMAGE_VERSION: $brooklyn:config("image.version")
             REPO_NAME: $brooklyn:config("repository.name")
+            IMAGE_VERSION: $brooklyn:config("image.version")
+            IMAGE:
+              $brooklyn:formatString:
+                - "%s/%s:%s"
+                - $brooklyn:config("repository.name")
+                - $brooklyn:config("image.name")
+                - $brooklyn:config("image.version")
             NETWORK: $brooklyn:config("sawtooth.network")
             DEBUG: $brooklyn:config("network.debug")
 

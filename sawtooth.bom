@@ -29,6 +29,7 @@ brooklyn.catalog:
             brooklyn.config:
               sawtooth.size: 4
               sawtooth.network: "brooklyn"
+              sawtooth.network.cidr: "10.0.0.0/24"
               sawtooth.cluster.name: "brooklyn"
 
     - id: sawtooth-remote-cluster-template
@@ -47,6 +48,7 @@ brooklyn.catalog:
             brooklyn.config:
               sawtooth.size: 3
               sawtooth.network: "remote"
+              sawtooth.network.cidr: "10.1.1.0/24"
               sawtooth.cluster.name: "remote"
               sawtooth.network.seed: "brooklyn"
 

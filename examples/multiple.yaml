@@ -1,20 +1,37 @@
+id: sawtooth-multiple
+name: "sawtooth-multiple"
+
 services:
   - type: sawtooth-cluster-application
-    name: "sawtooth-blockchain"
+    name: "sawtooth-cluster"
     location: <add-main-location-here>
 
     brooklyn.config:
-      sawtooth.size: 5
+      sawtooth.size: 9
       sawtooth.network: "sawtooth"
+      sawtooth.network.cidr: "10.0.0.0/24"
       sawtooth.cluster.name: "sawtooth"
 
   - type: sawtooth-remote-cluster-application
-    name: "sawtooth-remote"
+    name: "sawtooth-remote-cluster-one"
     location: <add-remote-location-here>
 
     brooklyn.config:
-      sawtooth.size: 3
-      sawtooth.network: "remote"
-      sawtooth.cluster.name: "remote"
+      sawtooth.size: 4
+      sawtooth.network: "remote-one"
+      sawtooth.network.cidr: "10.0.1.0/24"
+      sawtooth.cluster.name: "remote-one"
+      sawtooth.network.seed: "sawtooth"
+      openvpn.config: $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
+
+  - type: sawtooth-remote-cluster-application
+    name: "sawtooth-remote-cluster-two"
+    location: <add-remote-location-here>
+
+    brooklyn.config:
+      sawtooth.size: 4
+      sawtooth.network: "remote-two"
+      sawtooth.network.cidr: "10.0.2.0/24"
+      sawtooth.cluster.name: "remote-two"
       sawtooth.network.seed: "sawtooth"
       openvpn.config: $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")

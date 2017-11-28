@@ -1,3 +1,6 @@
+id: sawtooth-workload
+name: "sawtooth-workload"
+
 location: <add-location-here>
 
 services:

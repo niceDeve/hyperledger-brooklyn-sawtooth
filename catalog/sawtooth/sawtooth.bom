@@ -28,6 +28,10 @@ brooklyn.catalog:
             description: "Network Name"
             type: string
             default: "sawtooth"
+          - name: sawtooth.network.cidr
+            description: "Network CIDR"
+            type: string
+            default: "10.0.0.0/24"
           - name: sawtooth.cluster.name
             description: "Cluster Name"
             type: string
@@ -85,10 +89,14 @@ brooklyn.catalog:
           sawtooth.network.seed: $brooklyn:config("sawtooth.network")
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
+            SUBNET: $brooklyn:config("sawtooth.network.cidr")
           post.launch.command:
-            echo "[SAW] Setup default ${NETWORK} overlay network"
+            echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
             docker network ls | grep "overlay.*${NETWORK}" ||
-              docker network create --driver=overlay "${NETWORK}"
+              docker network create \
+                  --driver=overlay \
+                  --subnet="${SUBNET}" \
+                  "${NETWORK}"
 
         brooklyn.children:
           - type: openvpn-server
@@ -240,11 +248,19 @@ brooklyn.catalog:
           - name: sawtooth.network
             description: "Network Name"
             type: string
-            default: "sawtooth"
+            default: "remote"
+          - name: sawtooth.network.cidr
+            description: "Network CIDR"
+            type: string
+            default: "10.1.0.0/24"
           - name: sawtooth.cluster.name
             description: "Cluster Name"
             type: string
             default: "remote"
+          - name: sawtooth.network.seed
+            description: "Seed Network Name"
+            type: string
+            default: "sawtooth"
           - name: openvpn.config
             description: "OpenVPN Config"
             type: string
@@ -266,16 +282,31 @@ brooklyn.catalog:
 
     - id: sawtooth-remote-node
       description: |
-        A Hyperledger Sawtooth Remote Node.
+        A Hyperledger Sawtooth Remote Networking Node.
       itemType: entity
       item:
         type: sawtooth-docker-engine
         name: "sawtooth-remote-node"
 
+        brooklyn.config:
+          shell.env:
+            NETWORK: $brooklyn:config("sawtooth.network")
+            SUBNET: $brooklyn:config("sawtooth.network.cidr")
+          post.launch.command:
+            echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
+            docker network ls | grep "overlay.*${NETWORK}" ||
+              docker network create \
+                  --driver=overlay \
+                  --subnet="${SUBNET}" \
+                  "${NETWORK}"
+
         brooklyn.children:
           - type: openvpn-client
             name: "openvpn-client"
             id: openvpn-client
+          - type: openvpn-router
+            name: "openvpn-router"
+            id: openvpn-router
 
     - id: sawtooth-rest-api
       description: |
@@ -300,7 +331,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004 \
                 -p 8080:8080 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 sawtooth-rest-api -v \
                     --connect tcp://${NODE}.${NETWORK}:4004 \
                     --bind 0.0.0.0:8080 \
@@ -328,7 +359,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004:4004 \
                 -p 8800:8800 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 bash -c "\
                     sawtooth admin keygen --force && \
                     sawtooth keygen ${NETWORK} --force && \
@@ -340,8 +371,7 @@ brooklyn.catalog:
                       --bind network:tcp://eth0:8800 \
                       --peering dynamic \
                       --opentsdb-url http://influxdb.${NETWORK}:8086 \
-                      --opentsdb-db metrics \
-                    "
+                      --opentsdb-db metrics"
 
         brooklyn.initializers:
           - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
@@ -350,14 +380,18 @@ brooklyn.catalog:
               description: |
                 The private key for this Sawtooth network
               command: |
-                docker exec validator bash -c "test -f /root/.sawtooth/keys/${NETWORK}.priv && cat /root/.sawtooth/keys/${NETWORK}.priv"
+                docker exec \
+                    validator \
+                    bash -c "test -f /root/.sawtooth/keys/${NETWORK}.priv && cat /root/.sawtooth/keys/${NETWORK}.priv"
           - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
             brooklyn.config:
               name: sawtooth.key.public
               description: |
                 The public key for this Sawtooth network
               command: |
-                docker exec validator bash -c "test -f /root/.sawtooth/keys/${NETWORK}.pub && cat /root/.sawtooth/keys/${NETWORK}.pub"
+                docker exec \
+                    validator \
+                    bash -c "test -f /root/.sawtooth/keys/${NETWORK}.pub && cat /root/.sawtooth/keys/${NETWORK}.pub"
 
     - id: sawtooth-validator
       description: |
@@ -383,7 +417,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004:4004 \
                 -p 8800:8800 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 bash -c "\
                     sawtooth admin keygen --force && \
                     sawtooth keygen --force && \
@@ -395,8 +429,7 @@ brooklyn.catalog:
                       --peers tcp://validator.${SEED_NETWORK}:8800 \
                       --seed tcp://validator.${SEED_NETWORK}:8800 \
                       --opentsdb-url http://influxdb.${SEED_NETWORK}:8086 \
-                      --opentsdb-db metrics \
-                    "
+                      --opentsdb-db metrics"
 
     - id: sawtooth-settings-tp
       description: |
@@ -423,7 +456,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 settings-tp -vv -C tcp://${NODE}.${NETWORK}:4004
 
     - id: sawtooth-identity-tp
@@ -451,7 +484,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 identity-tp -vv -C tcp://${NODE}.${NETWORK}:4004
 
     - id: sawtooth-smallbank-tp
@@ -479,7 +512,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 smallbank-tp-go -vv tcp://${NODE}.${NETWORK}:4004
 
     - id: influxdb
@@ -501,7 +534,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 8086:8086 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
+                ${IMAGE}
 
     - id: grafana
       description: |
@@ -522,7 +555,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 3000:3000 \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION}
+                ${IMAGE}
 
     - id: telegraf
       description: |
@@ -557,7 +590,7 @@ brooklyn.catalog:
                 -e "NETWORK=${NETWORK}" \
                 -e "DOCKER_HOST=${DOCKER_HOST}" \
                 -v "$(pwd)/config:/config" \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 telegraf --config /config/telegraf.conf
 
     - id: sawtooth-smallbank-workload
@@ -583,7 +616,7 @@ brooklyn.catalog:
                 -d \
                 -ti \
                 -v "$(pwd)/data:/data" \
-                ${REPO_NAME}/${IMAGE_NAME}:${SAWTOOTH_VERSION} \
+                ${IMAGE} \
                 bash
 
         brooklyn.initializers:
@@ -608,8 +641,14 @@ brooklyn.catalog:
                   defaultValue: 10
               command: |
                 echo "${key}" | sudo tee -a data/${filename}.priv
-                docker exec smallbank-workload /bin/create.sh /data/${filename}.priv ${filename} \
-                  ${accounts} ${transactions} ${batches}
+                docker exec \
+                    smallbank-workload \
+                    /bin/create.sh \
+                      /data/${filename}.priv \
+                      ${filename} \
+                      ${accounts} \
+                      ${transactions} \
+                      ${batches}
           - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
             brooklyn.config:
               name: "submit-transactions"
@@ -624,5 +663,9 @@ brooklyn.catalog:
                   description: "Rate of transactions per second"
                   defaultValue: 10
               command: |
-                docker exec smallbank-workload /bin/submit.sh ${filename} \
-                  ${endpoint} ${rate}
+                docker exec \
+                    smallbank-workload \
+                    /bin/submit.sh \
+                      ${filename} \
+                      ${endpoint} \
+                      ${rate}
