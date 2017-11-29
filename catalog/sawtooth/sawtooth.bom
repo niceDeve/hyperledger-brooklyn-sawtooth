@@ -44,19 +44,21 @@ brooklyn.catalog:
             name: "sawtooth-server-node"
             id: sawtooth-server-node
             brooklyn.config:
-              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
-              launch.latch: $brooklyn:component("etcd-node").attributeWhenReady("service.isUp")
+              cluster.endpoint:
+                $brooklyn:sibling("etcd-node").attributeWhenReady("etcd.authority")
           - type: sawtooth-validator-cluster
             name: "sawtooth-validator-cluster"
-            id: sawtooth-validator-cluster"
+            id: sawtooth-validator-cluster
             brooklyn.config:
-              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+              cluster.endpoint:
+                $brooklyn:sibling("etcd-node").attributeWhenReady("etcd.authority")
+              launch.latch:
+                $brooklyn:ancestor("sawtooth-validator-cluster").sibling("sawtooth-server-node").attributeWhenReady("service.isUp")
               sawtooth.seed.network: $brooklyn:config("sawtooth.network")
               sawtooth.seed.validator:
                 $brooklyn:formatString:
                   - "validator.%s"
                   - $brooklyn:config("sawtooth.network")
-              launch.latch: $brooklyn:component("sawtooth-server-node").attributeWhenReady("service.isUp")
 
         brooklyn.enrichers:
           - type: org.apache.brooklyn.enricher.stock.Propagator
@@ -168,6 +170,12 @@ brooklyn.catalog:
               uniqueTag: grafana-main-uri-propagator
               sensorMapping:
                 $brooklyn:sensor("sawtooth.grafana.uri"): $brooklyn:sensor("main.uri")
+          - type: org.apache.brooklyn.enricher.stock.Propagator
+            brooklyn.config:
+              uniqueTag: validator-main-name-propagator
+              producer: $brooklyn:child("sawtooth-validator")
+              propagating:
+                - $brooklyn:sensor("sawtooth.name")
 
     - id: sawtooth-validator-node
       description: |
@@ -204,6 +212,14 @@ brooklyn.catalog:
             id: sawtooth-smallbank-tp
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+
+        brooklyn.enrichers:
+          - type: org.apache.brooklyn.enricher.stock.Propagator
+            brooklyn.config:
+              uniqueTag: validator-name-propagator
+              producer: $brooklyn:child("sawtooth-validator")
+              propagating:
+                - $brooklyn:sensor("sawtooth.name")
 
     - id: sawtooth-workload-application
       description: |
@@ -294,13 +310,16 @@ brooklyn.catalog:
             name: "sawtooth-remote-node"
             id: sawtooth-remote-node
             brooklyn.config:
-              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
-              launch.latch: $brooklyn:component("etcd-node").attributeWhenReady("service.isUp")
+              cluster.endpoint:
+                $brooklyn:sibling("etcd-node").attributeWhenReady("etcd.authority")
           - type: sawtooth-validator-cluster
             name: "sawtooth-validator-cluster"
-            id: sawtooth-validator-cluster"
+            id: sawtooth-validator-cluster
             brooklyn.config:
-              cluster.endpoint: $brooklyn:component("etcd-node").attributeWhenReady("etcd.authority")
+              cluster.endpoint:
+                $brooklyn:sibling("etcd-node").attributeWhenReady("etcd.authority")
+              launch.latch:
+                $brooklyn:ancestor("sawtooth-validator-cluster").sibling("sawtooth-remote-node").attributeWhenReady("service.isUp")
               dynamiccluster.firstmemberspec:
                 $brooklyn:entitySpec:
                   type: sawtooth-validator-node
@@ -320,7 +339,6 @@ brooklyn.catalog:
                         - "%s-000.%s"
                         - $brooklyn.config("sawtooth.cluster.name")
                         - $brooklyn:config("sawtooth.network")
-              launch.latch: $brooklyn:component("sawtooth-remote-node").attributeWhenReady("service.isUp")
 
     - id: sawtooth-remote-node
       description: |
@@ -416,6 +434,14 @@ brooklyn.catalog:
                       --opentsdb-db metrics"
 
         brooklyn.initializers:
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.name
+              static.value:
+                $brooklyn:formatString:
+                  - "%s.%s"
+                  - $brooklyn:config("sawtooth.node")
+                  - $brooklyn:config("sawtooth.network")
           - type: org.apache.brooklyn.core.sensor.ssh.SshCommandSensor
             brooklyn.config:
               name: sawtooth.key.private
@@ -473,6 +499,16 @@ brooklyn.catalog:
                       --seed tcp://${SEED_VALIDATOR}:8800 \
                       --opentsdb-url http://influxdb.${SEED_NETWORK}:8086 \
                       --opentsdb-db metrics"
+
+        brooklyn.initializers:
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.name
+              static.value:
+                $brooklyn:formatString:
+                  - "%s.%s"
+                  - $brooklyn:config("sawtooth.node")
+                  - $brooklyn:config("sawtooth.network")
 
     - id: sawtooth-settings-tp
       description: |
