@@ -364,6 +364,8 @@ brooklyn.catalog:
           - type: openvpn-client
             name: "openvpn-client"
             id: openvpn-client
+            brooklyn.config:
+              openvpn.client: $brooklyn:config("sawtooth.network.seed")
           - type: openvpn-router
             name: "openvpn-router"
             id: openvpn-router
