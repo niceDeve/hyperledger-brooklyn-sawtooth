@@ -106,12 +106,15 @@ brooklyn.catalog:
             sudo systemctl stop docker.service
             sudo sed -i "s/ExecStart=\/usr\/bin\/dockerd.*$/ExecStart=\/usr\/bin\/dockerd/g" \
               /lib/systemd/system/docker.service
+            GROUP=$(groups | cut -d\  -f1)
             sudo tee -a /etc/docker/daemon.json <<EOF
             {
               "debug": true,
               "hosts": [
+                "fd://",
                 "tcp://0.0.0.0:${DOCKER_PORT}"
               ],
+              "group": "${GROUP}",
               "cluster-store": "${ETCD_AUTHORITY}",
               "cluster-advertise": "${HOST_SUBNET_ADDRESS}:${DOCKER_PORT}",
               "labels": [
@@ -170,6 +173,9 @@ brooklyn.catalog:
             description: "Network Debug"
             type: boolean
             default: false
+          - name: container.options
+            description: "Container Options"
+            type: string
 
         brooklyn.config:
           shell.env:
@@ -192,6 +198,7 @@ brooklyn.catalog:
                 - $brooklyn:config("image.version")
             NETWORK: $brooklyn:config("sawtooth.network")
             DEBUG: $brooklyn:config("network.debug")
+            CONTAINER_OPTIONS: $brooklyn:config("container.options")
 
           post.install.command: |
             echo "[SAW] container ${CONTAINER_NAME} installed as ${ENTITY_ID}"

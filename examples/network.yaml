@@ -27,6 +27,8 @@ services:
       sawtooth.cluster.name: "sawtooth"
       sawtooth.seed.network:
         $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network")
+      sawtooth.seed.network.cidr:
+        $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network.cidr")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
       launch.latch:
@@ -44,6 +46,8 @@ services:
       sawtooth.cluster.name: "sawtooth"
       sawtooth.seed.network:
         $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network")
+      sawtooth.seed.network.cidr:
+        $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network.cidr")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
       launch.latch:

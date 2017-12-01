@@ -322,7 +322,7 @@ brooklyn.catalog:
                 $brooklyn:ancestor("sawtooth-validator-cluster").sibling("sawtooth-remote-node").attributeWhenReady("service.isUp")
               dynamiccluster.firstmemberspec:
                 $brooklyn:entitySpec:
-                  type: sawtooth-validator-node
+                  type: sawtooth-remote-validator-node
                   name: "sawtooth-validator-node"
                   brooklyn.config:
                     sawtooth.seed.validator:
@@ -331,7 +331,7 @@ brooklyn.catalog:
                         - $brooklyn:config("sawtooth.seed.network")
               dynamiccluster.memberspec:
                 $brooklyn:entitySpec:
-                  type: sawtooth-validator-node
+                  type: sawtooth-remote-validator-node
                   name: "sawtooth-validator-node"
                   brooklyn.config:
                     sawtooth.seed.validator:
@@ -339,6 +339,30 @@ brooklyn.catalog:
                         - "%s-000.%s"
                         - $brooklyn.config("sawtooth.cluster.name")
                         - $brooklyn:config("sawtooth.network")
+
+    - id: sawtooth-remote-validator-node
+      description: |
+        A Hyperledger Sawtooth Remote Validator Node.
+      itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
+      item:
+        type: sawtooth-validator-node
+        name: "sawtooth-validator-node"
+
+        brooklyn.config:
+          container.options: "--cap-add=NET_ADMIN"
+
+        brooklyn.children:
+          - type: openvpn-router
+            name: "openvpn-router"
+            id: openvpn-router
+            brooklyn.config:
+              container.name:
+                $brooklyn:formatString:
+                  - "openvpn-router-%s"
+                  - $brooklyn:attributeWhenReady("entity.id")
+              openvpn.client: $brooklyn:config("sawtooth.seed.network")
+              openvpn.network.cidr: $brooklyn:config("sawtooth.seed.network.cidr")
 
     - id: sawtooth-remote-node
       description: |
@@ -365,10 +389,13 @@ brooklyn.catalog:
             name: "openvpn-client"
             id: openvpn-client
             brooklyn.config:
-              openvpn.client: $brooklyn:config("sawtooth.network.seed")
+              openvpn.client: $brooklyn:config("sawtooth.seed.network")
           - type: openvpn-router
             name: "openvpn-router"
             id: openvpn-router
+            brooklyn.config:
+              openvpn.client: $brooklyn:config("sawtooth.seed.network")
+              openvpn.network.cidr: $brooklyn:config("sawtooth.seed.network.cidr")
 
     - id: sawtooth-rest-api
       description: |
@@ -393,6 +420,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004 \
                 -p 8080:8080 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 sawtooth-rest-api -v \
                     --connect tcp://${NODE}.${NETWORK}:4004 \
@@ -421,6 +449,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004:4004 \
                 -p 8800:8800 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 bash -c "\
                     sawtooth admin keygen --force && \
@@ -488,6 +517,7 @@ brooklyn.catalog:
                 -d \
                 -p 4004:4004 \
                 -p 8800:8800 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 bash -c "\
                     sawtooth admin keygen --force && \
@@ -537,6 +567,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 settings-tp -vv -C tcp://${NODE}.${NETWORK}:4004
 
@@ -565,6 +596,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 identity-tp -vv -C tcp://${NODE}.${NETWORK}:4004
 
@@ -593,6 +625,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 smallbank-tp-go -vv tcp://${NODE}.${NETWORK}:4004
 
@@ -615,6 +648,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 8086:8086 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE}
 
     - id: grafana
@@ -636,6 +670,7 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 3000:3000 \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE}
 
     - id: telegraf
@@ -671,6 +706,7 @@ brooklyn.catalog:
                 -e "NETWORK=${NETWORK}" \
                 -e "DOCKER_HOST=${DOCKER_HOST}" \
                 -v "$(pwd)/config:/config" \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 telegraf --config /config/telegraf.conf
 
@@ -697,6 +733,7 @@ brooklyn.catalog:
                 -d \
                 -ti \
                 -v "$(pwd)/data:/data" \
+                ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 bash
 

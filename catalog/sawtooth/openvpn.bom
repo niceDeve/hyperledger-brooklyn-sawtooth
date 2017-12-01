@@ -9,7 +9,7 @@ brooklyn.catalog:
   items:
     - id: openvpn-server
       description: |
-        OpenVPN Server
+        OpenVPN Server.
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/openvpn.png"
       itemtype: entity
       item:
@@ -38,7 +38,20 @@ brooklyn.catalog:
                 -v ${OPENVPN_DATA}:/etc/openvpn \
                 --rm \
                 ${IMAGE} \
-                ovpn_genconfig -u udp://${HOST_ADDRESS} -N -d -p "route ${SUBNET} ${NETMASK}"
+                ovpn_genconfig \
+                  -u udp://${HOST_ADDRESS} \
+                  -N \
+                  -m 1500 \
+                  -d \
+                  -r ${SUBNET_CIDR} \
+                  -p "route ${SUBNET} ${NETMASK}"
+            echo "duplicate-cn" | docker run \
+                -v ${OPENVPN_DATA}:/etc/openvpn \
+                --rm \
+                -i \
+                ${IMAGE} \
+                tee -a openvpn.conf
+
             echo "${NETWORK}" | docker run \
                 -v ${OPENVPN_DATA}:/etc/openvpn \
                 --rm \
@@ -81,7 +94,7 @@ brooklyn.catalog:
 
     - id: openvpn-client
       description: |
-        OpenVPN Client
+        OpenVPN Client.
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/openvpn.png"
       itemtype: entity
       item:
@@ -96,6 +109,8 @@ brooklyn.catalog:
           shell.env:
             OPENVPN_CONFIG: $brooklyn:config("openvpn.config")
             OPENVPN_CLIENT: $brooklyn:config("openvpn.client")
+            SUBNET_CIDR: $brooklyn:config("sawtooth.network.cidr")
+            HOST_ADDRESS: $brooklyn:parent().attributeWhenReady("host.address")
 
           customize.command: |
             mkdir -p ${RUN_DIR}/openvpn
@@ -118,8 +133,7 @@ brooklyn.catalog:
 
     - id: openvpn-router
       description: |
-        OpenVPN Client
-      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/openvpn.png"
+        OpenVPN Router.
       itemtype: entity
       item:
         type: sawtooth-docker-container
@@ -128,8 +142,14 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "openvpn-router"
           image.name: "ubuntu"
-          repository.name: "library"
           image.version: "xenial"
+          repository.name: "library"
+
+          shell.env:
+            OPENVPN_CLIENT: $brooklyn:config("openvpn.client")
+            REMOTE_SUBNET_CIDR: $brooklyn:config("openvpn.network.cidr")
+            SUBNET_CIDR: $brooklyn:config("sawtooth.network.cidr")
+            HOST_ADDRESS: $brooklyn:parent().attributeWhenReady("host.address")
 
           launch.command: |
             docker run \
@@ -138,5 +158,14 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -ti \
-                ${IMAGE} \
+                --cap-add=NET_ADMIN \
+                ${IMAGE}
                 bash
+
+          post.launch.command: |
+            docker exec \
+              -i \
+              ${CONTAINER_NAME} \
+              bash -c "\
+                apt-get update -y && \
+                apt-get install -y iproute iproute2 net-tools traceroute iputils-ping"
