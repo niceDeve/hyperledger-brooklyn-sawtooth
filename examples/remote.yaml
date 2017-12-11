@@ -13,7 +13,8 @@ services:
     brooklyn.config:
       sawtooth.size: 3
       sawtooth.network: "remote"
-      sawtooth.network.cidr: "10.0.1.0/24"
+      sawtooth.network.cidr: "10.1.1.0/27"
       sawtooth.cluster.name: "sawtooth"
       sawtooth.seed.network: "example"
+      sawtooth.seed.network.cidr: "10.0.0.0/22"
       openvpn.config: <add-openvpn-config-here>

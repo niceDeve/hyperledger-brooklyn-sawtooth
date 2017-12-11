@@ -13,5 +13,5 @@ services:
     brooklyn.config:
       sawtooth.size: 4
       sawtooth.network: "example"
-      sawtooth.network.cidr: "10.0.0.0/24"
+      sawtooth.network.cidr: "10.0.0.0/22"
       sawtooth.cluster.name: "sawtooth"
