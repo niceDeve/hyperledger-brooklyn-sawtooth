@@ -657,6 +657,66 @@ brooklyn.catalog:
                 ${IMAGE} \
                 identity-tp -vv --connect tcp://${NODE}.${NETWORK}:4004
 
+    - id: sawtooth-intkey-tp
+      description: |
+        The Hyperledger Sawtooth Integer Key Transaction Processor Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-intkey-tp"
+
+        brooklyn.config:
+          container.name:
+            $brooklyn:formatString:
+              - "intkey-tp-%s"
+              - $brooklyn:attributeWhenReady("entity.id")
+          image.name: "sawtooth-intkey-tp-go"
+          image.version: $brooklyn:config("sawtooth.version")
+
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004 \
+                ${CONTAINER_OPTIONS} \
+                ${IMAGE} \
+                intkey-tp-go -vv --connect tcp://${NODE}.${NETWORK}:4004
+
+    - id: sawtooth-xo-tp
+      description: |
+        The Hyperledger Sawtooth XO Transaction Processor Container.
+      itemType: entity
+      item:
+        type: sawtooth-docker-container
+        name: "sawtooth-xo-tp"
+
+        brooklyn.config:
+          container.name:
+            $brooklyn:formatString:
+              - "xo-tp-%s"
+              - $brooklyn:attributeWhenReady("entity.id")
+          image.name: "sawtooth-xo-tp-go"
+          image.version: $brooklyn:config("sawtooth.version")
+
+          shell.env:
+            NODE: $brooklyn:config("sawtooth.node")
+
+          launch.command: |
+            docker run \
+                --name=${CONTAINER_NAME} \
+                --restart=always \
+                --network ${NETWORK} \
+                -d \
+                -p 4004 \
+                ${CONTAINER_OPTIONS} \
+                ${IMAGE} \
+                xo-tp-go -vv --connect tcp://${NODE}.${NETWORK}:4004
+
     - id: sawtooth-smallbank-tp
       description: |
         The Hyperledger Sawtooth Smallbank Transaction Processor Container.
@@ -700,7 +760,7 @@ brooklyn.catalog:
             $brooklyn:formatString:
               - "block-info-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
-          image.name: "sawtooth-block-info-tp"
+          image.name: "sawtooth-block-info-tp-python"
           image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
