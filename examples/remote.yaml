@@ -11,6 +11,7 @@ services:
     name: "sawtooth-remote-cluster"
 
     brooklyn.config:
+      sawtooth.version: "0.9.1"
       sawtooth.size: 3
       sawtooth.network: "remote"
       sawtooth.network.cidr: "10.1.1.0/27"

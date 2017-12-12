@@ -10,6 +10,7 @@ services:
     location: <add-main-location-here>
 
     brooklyn.config:
+      sawtooth.version: "0.9.1"
       sawtooth.size: 9
       sawtooth.network: "central"
       sawtooth.network.cidr: "10.0.0.0/22"
@@ -21,6 +22,7 @@ services:
     location: <add-remote-location-here>
 
     brooklyn.config:
+      sawtooth.version: "0.9.1"
       sawtooth.size: 4
       sawtooth.network: "remote.one"
       sawtooth.network.cidr: "10.1.1.0/24"
@@ -40,6 +42,7 @@ services:
     location: <add-remote-location-here>
 
     brooklyn.config:
+      sawtooth.version: "0.9.1"
       sawtooth.size: 4
       sawtooth.network: "remote.two"
       sawtooth.network.cidr: "10.1.2.0/24"

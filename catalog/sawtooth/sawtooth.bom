@@ -17,6 +17,10 @@ brooklyn.catalog:
         name: "sawtooth-cluster-application"
 
         brooklyn.parameters:
+          - name: sawtooth.version
+            description: "Sawtooth Version"
+            type: string
+            default: "latest"
           - name: sawtooth.size
             description: "Cluster Size"
             type: integer
@@ -264,6 +268,10 @@ brooklyn.catalog:
         name: "sawtooth-workload-application"
 
         brooklyn.parameters:
+          - name: sawtooth.version
+            description: "Sawtooth Version"
+            type: string
+            default: "latest"
           - name: cluster.endpoint
             description: "Docker Cluster Store URL"
             type: string
@@ -307,6 +315,10 @@ brooklyn.catalog:
         name: "sawtooth-remote-cluster-application"
 
         brooklyn.parameters:
+          - name: sawtooth.version
+            description: "Sawtooth Version"
+            type: string
+            default: "latest"
           - name: sawtooth.size
             description: "Cluster Size"
             type: integer
@@ -441,6 +453,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "rest-api"
           image.name: "sawtooth-rest-api"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -473,6 +486,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "validator"
           image.name: "sawtooth-validator"
+          image.version: $brooklyn:config("sawtooth.version")
 
           launch.command: |
             docker run \
@@ -543,6 +557,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: $brooklyn:config("sawtooth.node")
           image.name: "sawtooth-validator"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -596,6 +611,7 @@ brooklyn.catalog:
               - "settings-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-settings-tp"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -625,6 +641,7 @@ brooklyn.catalog:
               - "identity-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-identity-tp"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -654,6 +671,7 @@ brooklyn.catalog:
               - "smallbank-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-smallbank-tp-go"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -683,6 +701,7 @@ brooklyn.catalog:
               - "block-info-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-block-info-tp"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -712,6 +731,7 @@ brooklyn.catalog:
               - "seth-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-seth"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -741,6 +761,7 @@ brooklyn.catalog:
               - "seth-rpc-%s"
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-seth"
+          image.version: $brooklyn:config("sawtooth.version")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -849,6 +870,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "smallbank-workload"
           image.name: "smallbank-workload"
+          image.version: $brooklyn:config("sawtooth.version")
 
           customise.command: |
             mkdir data

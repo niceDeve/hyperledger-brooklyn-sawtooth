@@ -27,6 +27,7 @@ brooklyn.catalog:
             name: "sawtooth-cluster-application"
 
             brooklyn.config:
+              sawtooth.version: "0.9.1"
               sawtooth.size: 4
               sawtooth.network: "sawtooth"
               sawtooth.network.cidr: "10.0.0.0/24"
@@ -46,6 +47,7 @@ brooklyn.catalog:
             name: "sawtooth-remote-cluster-application"
 
             brooklyn.config:
+              sawtooth.version: "0.9.1"
               sawtooth.size: 3
               sawtooth.network: "remote"
               sawtooth.network.cidr: "10.1.1.0/24"
@@ -66,4 +68,5 @@ brooklyn.catalog:
             name: "sawtooth-workload-application"
 
             brooklyn.config:
+              sawtooth.version: "0.9.1"
               sawtooth.network: "sawtooth"

@@ -11,5 +11,6 @@ services:
     name: "sawtooth-workload"
 
     brooklyn.config:
+      sawtooth.version: "0.9.1"
       sawtooth.network: "example"
       cluster.endpoint: <add-etcd-endpoint-here>
