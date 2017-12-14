@@ -1,7 +1,7 @@
 id: sawtooth-workload
 name: "sawtooth-workload"
 description: |
-  Sawtooth workload generator for Smallbank.
+  Sawtooth workload generator for 'smallbank'.
 
 location: <add-location-here>
 

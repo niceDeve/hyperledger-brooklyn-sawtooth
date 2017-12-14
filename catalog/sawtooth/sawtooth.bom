@@ -9,7 +9,7 @@ brooklyn.catalog:
   items:
     - id: sawtooth-cluster-application
       description: |
-        A Hyperledger Sawtooth Cluster.
+        Hyperledger Sawtooth cluster application.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -74,7 +74,7 @@ brooklyn.catalog:
 
     - id: sawtooth-validator-cluster
       description: |
-        A Hyperledger Sawtooth Cluster of Validators.
+        A cluster of Hyperledger Sawtooth validators.
       itemType: entity
       item:
         type: cluster
@@ -89,7 +89,11 @@ brooklyn.catalog:
 
     - id: sawtooth-server-node
       description: |
-        A Hyperledger Sawtooth Server.
+        The Hyperledger Sawtooth server node.
+
+        Initialises the network and starts an OpenVPN server. Starts an InfluxDB
+        metrics database and the Grafana dashboard with a Telegraf monitoring service.
+        Exposes endpoints for the Grafana, Sawtooth REST API and Seth RPC services.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -161,9 +165,6 @@ brooklyn.catalog:
             id: sawtooth-seth-tp
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
-              # post.launch.command: |
-              #   docker exec -ti sawtooth-seth-tp \
-              #     seth init http://rest-api.${NETWORK}:8080
           - type: sawtooth-seth-rpc
             name: "sawtooth-seth-rpc"
             id: sawtooth-seth-rpc
@@ -185,6 +186,13 @@ brooklyn.catalog:
                 $brooklyn:formatString:
                   - "http://%s:8080/blocks"
                   - $brooklyn:attributeWhenReady("host.address")
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.seth-rpc.uri
+              static.value:
+                $brooklyn:formatString:
+                  - "http://%s:3030/"
+                  - $brooklyn:attributeWhenReady("host.address")
 
         brooklyn.enrichers:
           - type: org.apache.brooklyn.enricher.stock.Propagator
@@ -201,7 +209,7 @@ brooklyn.catalog:
 
     - id: sawtooth-validator-node
       description: |
-        A Hyperledger Sawtooth Validator Node.
+        A Hyperledger Sawtooth validator node.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -244,11 +252,6 @@ brooklyn.catalog:
             id: sawtooth-seth-tp
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
-          - type: sawtooth-seth-rpc
-            name: "sawtooth-seth-rpc"
-            id: sawtooth-seth-rpc
-            brooklyn.config:
-              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
 
         brooklyn.enrichers:
           - type: org.apache.brooklyn.enricher.stock.Propagator
@@ -260,7 +263,7 @@ brooklyn.catalog:
 
     - id: sawtooth-workload-application
       description: |
-        Hyperledger Sawtooth Workload Generator.
+        Hyperledger Sawtooth workload generator application.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -289,7 +292,7 @@ brooklyn.catalog:
 
     - id: sawtooth-workload-node
       description: |
-        A Hyperledger Sawtooth Workload Generator Node.
+        A Hyperledger Sawtooth workload generator node.
       itemType: entity
       item:
         type: sawtooth-docker-engine
@@ -307,7 +310,7 @@ brooklyn.catalog:
 
     - id: sawtooth-remote-cluster-application
       description: |
-        A Remote Hyperledger Sawtooth Cluster.
+        Remote Hyperledger Sawtooth cluster application.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -351,9 +354,9 @@ brooklyn.catalog:
           - type: etcd-node
             name: "etcd-node"
             id: etcd-node
-          - type: sawtooth-remote-node
-            name: "sawtooth-remote-node"
-            id: sawtooth-remote-node
+          - type: sawtooth-remote-server-node
+            name: "sawtooth-remote-server-node"
+            id: sawtooth-remote-server-node
             brooklyn.config:
               cluster.endpoint:
                 $brooklyn:sibling("etcd-node").attributeWhenReady("etcd.authority")
@@ -364,20 +367,12 @@ brooklyn.catalog:
               cluster.endpoint:
                 $brooklyn:sibling("etcd-node").attributeWhenReady("etcd.authority")
               launch.latch:
-                $brooklyn:ancestor("sawtooth-validator-cluster").sibling("sawtooth-remote-node").attributeWhenReady("service.isUp")
-              dynamiccluster.firstmemberspec:
-                $brooklyn:entitySpec:
-                  type: sawtooth-remote-validator-node
-                  name: "sawtooth-validator-node"
-                  brooklyn.config:
-                    sawtooth.seed.validator:
-                      $brooklyn:formatString:
-                        - "validator.%s"
-                        - $brooklyn:config("sawtooth.seed.network")
+                $brooklyn:ancestor("sawtooth-validator-cluster").sibling("sawtooth-remote-server-node").attributeWhenReady("service.isUp")
               dynamiccluster.memberspec:
                 $brooklyn:entitySpec:
                   type: sawtooth-remote-validator-node
                   name: "sawtooth-validator-node"
+                  id: sawtooth-validator-node
                   brooklyn.config:
                     sawtooth.seed.validator:
                       $brooklyn:formatString:
@@ -385,9 +380,81 @@ brooklyn.catalog:
                         - $brooklyn.config("sawtooth.cluster.name")
                         - $brooklyn:config("sawtooth.network")
 
+        brooklyn.enrichers:
+          - type: org.apache.brooklyn.enricher.stock.Propagator
+            brooklyn.config:
+              uniqueTag: remote-rest-api-main-uri-propagator
+              producer: $brooklyn:component("sawtooth-remote-server-node")
+              sensorMapping:
+                $brooklyn:sensor("sawtooth.rest-api.uri"): $brooklyn:sensor("main.uri")
+
+    - id: sawtooth-remote-server-node
+      description: |
+        A remote Hyperledger Sawtooth server node.
+
+        Initialises the remote network and connects to the OpenVPN server. Exposes
+        endpoints for the Sawtooth REST API and Seth RPC services.
+      itemType: entity
+      iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
+      item:
+        type: sawtooth-remote-validator-node
+        name: "sawtooth-remote-server-node"
+
+        brooklyn.config:
+          sawtooth.seed.validator:
+            $brooklyn:formatString:
+              - "validator.%s"
+              - $brooklyn:config("sawtooth.seed.network")
+          shell.env:
+            NETWORK: $brooklyn:config("sawtooth.network")
+            SUBNET: $brooklyn:config("sawtooth.network.cidr")
+          post.launch.command: |
+            echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
+            docker network ls | grep "overlay.*${NETWORK}" ||
+              docker network create \
+                  --driver=overlay \
+                  --subnet="${SUBNET}" \
+                  "${NETWORK}"
+
+        brooklyn.children:
+          - type: openvpn-client
+            name: "openvpn-client"
+            id: openvpn-client
+            brooklyn.config:
+              openvpn.client: $brooklyn:config("sawtooth.seed.network")
+          - type: sawtooth-rest-api
+            name: "sawtooth-rest-api"
+            id: sawtooth-rest-api
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+          - type: sawtooth-seth-rpc
+            name: "sawtooth-seth-rpc"
+            id: sawtooth-seth-rpc
+            brooklyn.config:
+              launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+
+        brooklyn.initializers:
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.rest-api.uri
+              static.value:
+                $brooklyn:formatString:
+                  - "http://%s:8080/blocks"
+                  - $brooklyn:attributeWhenReady("host.address")
+          - type: org.apache.brooklyn.core.sensor.StaticSensor
+            brooklyn.config:
+              name: sawtooth.seth-rpc.uri
+              static.value:
+                $brooklyn:formatString:
+                  - "http://%s:3030/"
+                  - $brooklyn:attributeWhenReady("host.address")
+
     - id: sawtooth-remote-validator-node
       description: |
-        A Hyperledger Sawtooth Remote Validator Node.
+        A remote Hyperledger Sawtooth validator node.
+
+        Adds the network administration capability to child containers, to enable
+        altering their IP routing table, and starts a router service for the host.
       itemType: entity
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
@@ -409,42 +476,9 @@ brooklyn.catalog:
               openvpn.client: $brooklyn:config("sawtooth.seed.network")
               openvpn.network.cidr: $brooklyn:config("sawtooth.seed.network.cidr")
 
-    - id: sawtooth-remote-node
-      description: |
-        A Hyperledger Sawtooth Remote Networking Node.
-      itemType: entity
-      item:
-        type: sawtooth-docker-engine
-        name: "sawtooth-remote-node"
-
-        brooklyn.config:
-          shell.env:
-            NETWORK: $brooklyn:config("sawtooth.network")
-            SUBNET: $brooklyn:config("sawtooth.network.cidr")
-          post.launch.command: |
-            echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
-            docker network ls | grep "overlay.*${NETWORK}" ||
-              docker network create \
-                  --driver=overlay \
-                  --subnet="${SUBNET}" \
-                  "${NETWORK}"
-
-        brooklyn.children:
-          - type: openvpn-client
-            name: "openvpn-client"
-            id: openvpn-client
-            brooklyn.config:
-              openvpn.client: $brooklyn:config("sawtooth.seed.network")
-          - type: openvpn-router
-            name: "openvpn-router"
-            id: openvpn-router
-            brooklyn.config:
-              openvpn.client: $brooklyn:config("sawtooth.seed.network")
-              openvpn.network.cidr: $brooklyn:config("sawtooth.seed.network.cidr")
-
     - id: sawtooth-rest-api
       description: |
-        The Main Hyperledger Sawtooth REST API Container.
+        The main Hyperledger Sawtooth REST API container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -457,6 +491,7 @@ brooklyn.catalog:
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
+            SEED_NETWORK: $brooklyn:config("sawtooth.seed.network")
 
           launch.command: |
             docker run \
@@ -471,13 +506,16 @@ brooklyn.catalog:
                 sawtooth-rest-api -v \
                     --connect tcp://${NODE}.${NETWORK}:4004 \
                     --bind 0.0.0.0:8080 \
-                    --opentsdb-url http://influxdb.${NETWORK}:8086 \
+                    --opentsdb-url http://influxdb.${SEED_NETWORK:-${NETWORK}}:8086 \
                     --opentsdb-db metrics
 
     - id: sawtooth-validator-main
       description: |
-        The Main Hyperledger Sawtooth Validator Container.
-        Creates the Genesis block and initialises the blockchain.
+        The main Hyperledger Sawtooth validator container.
+
+        Configures the validator with the genesis block, creates various private
+        keys, enables injecting 'block-info' transactions and initialises the
+        blockchain.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -548,7 +586,7 @@ brooklyn.catalog:
 
     - id: sawtooth-validator
       description: |
-        The Hyperledger Sawtooth Validator Container.
+        A Hyperledger Sawtooth validator container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -599,7 +637,8 @@ brooklyn.catalog:
 
     - id: sawtooth-settings-tp
       description: |
-        The Hyperledger Sawtooth Settings Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'settings' family.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -629,7 +668,8 @@ brooklyn.catalog:
 
     - id: sawtooth-identity-tp
       description: |
-        The Hyperledger Sawtooth Identity Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'identity' family.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -659,7 +699,8 @@ brooklyn.catalog:
 
     - id: sawtooth-intkey-tp
       description: |
-        The Hyperledger Sawtooth Integer Key Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'intkey' family.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -689,7 +730,8 @@ brooklyn.catalog:
 
     - id: sawtooth-xo-tp
       description: |
-        The Hyperledger Sawtooth XO Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'xo' family.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -719,7 +761,8 @@ brooklyn.catalog:
 
     - id: sawtooth-smallbank-tp
       description: |
-        The Hyperledger Sawtooth Smallbank Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'smallbank' family.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -749,7 +792,8 @@ brooklyn.catalog:
 
     - id: sawtooth-block-info-tp
       description: |
-        The Hyperledger Sawtooth Block Info Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'block-info' family.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -779,7 +823,10 @@ brooklyn.catalog:
 
     - id: sawtooth-seth-tp
       description: |
-        The Hyperledger Sawtooth Seth Transaction Processor Container.
+        A Hyperledger Sawtooth transaction processor container for the
+        'seth' family.
+
+        Enables the execution of EVM Solidity smart contracts.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -809,7 +856,10 @@ brooklyn.catalog:
 
     - id: sawtooth-seth-rpc
       description: |
-        The Hyperledger Sawtooth Seth RPC Node Container.
+        The Hyperledger Sawtooth 'seth' RPC service container.
+
+        Enables Ethereum compatible applications to integrate with Sawtooth and
+        create 'seth' transactions.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -833,14 +883,14 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
-                -p 3030 \
+                -p 3030:3030 \
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 /bin/seth-rpc --connect tcp://${NODE}.${NETWORK}:4004
 
     - id: influxdb
       description: |
-        The InfluxDB Container.
+        The InfluxDB container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -862,7 +912,7 @@ brooklyn.catalog:
 
     - id: grafana
       description: |
-        The Grafana Container.
+        The Grafana container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -884,7 +934,7 @@ brooklyn.catalog:
 
     - id: telegraf
       description: |
-        The Telegraf Container.
+        The Telegraf container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -921,7 +971,7 @@ brooklyn.catalog:
 
     - id: sawtooth-smallbank-workload
       description: |
-        The Hyperledger Sawtooth Smallbank Workload Generator Container.
+        The Hyperledger Sawtooth 'smallbank' workload generator container.
       itemType: entity
       item:
         type: sawtooth-docker-container
@@ -951,7 +1001,7 @@ brooklyn.catalog:
           - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
             brooklyn.config:
               name: "create-transactions"
-              description: "Creates batches of Smallbank transactions for workload testing"
+              description: "Creates batches of transactions for workload testing"
               parameters:
                 key:
                   description: "The private key data to sign the transactions with"
@@ -980,7 +1030,7 @@ brooklyn.catalog:
           - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
             brooklyn.config:
               name: "submit-transactions"
-              description: "Submit batches of generated Smallbank transactions as workload testing"
+              description: "Submit batches of generated transactions as workload testing"
               parameters:
                 filename:
                   description: "The name of the transaction file to submit"
