@@ -107,7 +107,7 @@ brooklyn.catalog:
             sudo sed -i "s/ExecStart=\/usr\/bin\/dockerd.*$/ExecStart=\/usr\/bin\/dockerd/g" \
               /lib/systemd/system/docker.service
             GROUP=$(groups | cut -d\  -f1)
-            sudo tee -a /etc/docker/daemon.json <<EOF
+            sudo tee /etc/docker/daemon.json <<EOF
             {
               "debug": true,
               "hosts": [
@@ -165,10 +165,10 @@ brooklyn.catalog:
             description: "Image Version"
             type: string
             default: "latest"
-          - name: repository.name
-            description: "Repo Name"
+          - name: image.repository
+            description: "Image Repository"
             type: string
-            default: "scotcoin"
+            default: "library"
           - name: network.debug
             description: "Network Debug"
             type: boolean
@@ -188,12 +188,12 @@ brooklyn.catalog:
             CONTAINER_NAME: $brooklyn:config("container.name")
             IMAGE_NAME: $brooklyn:config("image.name")
             IMAGE_VERSION: $brooklyn:config("image.version")
-            REPO_NAME: $brooklyn:config("repository.name")
+            REPO_NAME: $brooklyn:config("image.repository")
             IMAGE_VERSION: $brooklyn:config("image.version")
             IMAGE:
               $brooklyn:formatString:
                 - "%s/%s:%s"
-                - $brooklyn:config("repository.name")
+                - $brooklyn:config("image.repository")
                 - $brooklyn:config("image.name")
                 - $brooklyn:config("image.version")
             NETWORK: $brooklyn:config("sawtooth.network")

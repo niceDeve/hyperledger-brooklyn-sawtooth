@@ -19,7 +19,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "openvpn-server"
           image.name: "openvpn"
-          repository.name: "kylemanna"
+          image.repository: "kylemanna"
 
           shell.env:
             OPENVPN_DATA: "openvpn-data"
@@ -104,7 +104,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "openvpn-client"
           image.name: "openvpn"
-          repository.name: "kylemanna"
+          image.repository: "kylemanna"
 
           shell.env:
             OPENVPN_CONFIG: $brooklyn:config("openvpn.config")
@@ -143,7 +143,6 @@ brooklyn.catalog:
           container.name: "openvpn-router"
           image.name: "ubuntu"
           image.version: "xenial"
-          repository.name: "library"
 
           shell.env:
             OPENVPN_CLIENT: $brooklyn:config("openvpn.client")

@@ -21,6 +21,10 @@ brooklyn.catalog:
             description: "Sawtooth Version"
             type: string
             default: "latest"
+          - name: sawtooth.repository
+            description: "Sawtooth Repository"
+            type: string
+            default: "sawtooth"
           - name: sawtooth.size
             description: "Cluster Size"
             type: integer
@@ -275,6 +279,10 @@ brooklyn.catalog:
             description: "Sawtooth Version"
             type: string
             default: "latest"
+          - name: sawtooth.repository
+            description: "Sawtooth Repository"
+            type: string
+            default: "sawtooth"
           - name: cluster.endpoint
             description: "Docker Cluster Store URL"
             type: string
@@ -322,6 +330,10 @@ brooklyn.catalog:
             description: "Sawtooth Version"
             type: string
             default: "latest"
+          - name: sawtooth.repository
+            description: "Sawtooth Repository"
+            type: string
+            default: "sawtooth"
           - name: sawtooth.size
             description: "Cluster Size"
             type: integer
@@ -488,6 +500,7 @@ brooklyn.catalog:
           container.name: "rest-api"
           image.name: "sawtooth-rest-api"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -525,6 +538,7 @@ brooklyn.catalog:
           container.name: "validator"
           image.name: "sawtooth-validator"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           launch.command: |
             docker run \
@@ -596,6 +610,7 @@ brooklyn.catalog:
           container.name: $brooklyn:config("sawtooth.node")
           image.name: "sawtooth-validator"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -651,6 +666,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-settings-tp"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -682,6 +698,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-identity-tp"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -713,6 +730,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-intkey-tp-go"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -744,6 +762,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-xo-tp-go"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -775,6 +794,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-smallbank-tp-go"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -806,6 +826,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-block-info-tp-python"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -839,6 +860,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-seth"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -872,6 +894,7 @@ brooklyn.catalog:
               - $brooklyn:attributeWhenReady("entity.id")
           image.name: "sawtooth-seth"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
@@ -899,6 +922,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "influxdb"
           image.name: "sawtooth-stats-influxdb"
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           launch.command: |
             docker run \
@@ -921,6 +945,7 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "grafana"
           image.name: "sawtooth-stats-grafana"
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           launch.command: |
             docker run \
@@ -943,7 +968,6 @@ brooklyn.catalog:
         brooklyn.config:
           container.name: "telegraf"
           image.name: "telegraf"
-          repository.name: "library"
 
           shell.env:
             INSTALL_DIR: $brooklyn:attributeWhenReady("install.dir")
@@ -981,6 +1005,7 @@ brooklyn.catalog:
           container.name: "smallbank-workload"
           image.name: "smallbank-workload"
           image.version: $brooklyn:config("sawtooth.version")
+          image.repository: $brooklyn:config("sawtooth.repository")
 
           customise.command: |
             mkdir data

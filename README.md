@@ -20,6 +20,8 @@ Use the [example files](./examples) as templates to create a Sawtooth network bl
       - type: sawtooth-cluster-application
         name: "sawtooth-cluster"
         brooklyn.config:
+          sawtooth.version: "0.9.1"
+          sawtooth.repository: "sawtooth"
           sawtooth.size: 4
           sawtooth.network: "example"
           sawtooth.network.cidr: "10.0.0.0/24"

@@ -12,5 +12,6 @@ services:
 
     brooklyn.config:
       sawtooth.version: "0.9.1"
+      sawtooth.repository: "sawtooth"
       sawtooth.network: "example"
       cluster.endpoint: <add-etcd-endpoint-here>

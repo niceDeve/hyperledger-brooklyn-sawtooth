@@ -11,6 +11,7 @@ services:
 
     brooklyn.config:
       sawtooth.version: "0.9.1"
+      sawtooth.repository: "sawtooth"
       sawtooth.size: 9
       sawtooth.network: "central"
       sawtooth.network.cidr: "10.0.0.0/22"
@@ -23,6 +24,7 @@ services:
 
     brooklyn.config:
       sawtooth.version: "0.9.1"
+      sawtooth.repository: "sawtooth"
       sawtooth.size: 4
       sawtooth.network: "remote.one"
       sawtooth.network.cidr: "10.1.1.0/24"
@@ -43,6 +45,7 @@ services:
 
     brooklyn.config:
       sawtooth.version: "0.9.1"
+      sawtooth.repository: "sawtooth"
       sawtooth.size: 4
       sawtooth.network: "remote.two"
       sawtooth.network.cidr: "10.1.2.0/24"
