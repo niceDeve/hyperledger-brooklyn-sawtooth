@@ -169,6 +169,11 @@ brooklyn.catalog:
             id: sawtooth-seth-tp
             brooklyn.config:
               launch.latch: $brooklyn:sibling("sawtooth-validator").attributeWhenReady("service.isUp")
+              post.launch.command: |
+                docker exec \
+                  -i \
+                  ${CONTAINER_NAME} \
+                  seth init http://rest-api.${NETWORK}:8080
           - type: sawtooth-seth-rpc
             name: "sawtooth-seth-rpc"
             id: sawtooth-seth-rpc
@@ -865,6 +870,9 @@ brooklyn.catalog:
           shell.env:
             NODE: $brooklyn:config("sawtooth.node")
 
+          customise.command: |
+            mkdir data
+
           launch.command: |
             docker run \
                 --name=${CONTAINER_NAME} \
@@ -872,9 +880,27 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
+                -v "$(pwd)/data:/data" \
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 /bin/seth-tp -vv --connect tcp://${NODE}.${NETWORK}:4004
+
+        brooklyn.initializers:
+          - type: org.apache.brooklyn.core.effector.ssh.SshCommandEffector
+            brooklyn.config:
+              name: "create-account"
+              description: "Creates a seth account with a specific alias"
+              parameters:
+                alias:
+                  description: "The account alias"
+              command: |
+                [ -f "data/${alias}.pem" ] && exit 1
+                docker exec ${CONTAINER_NAME} \
+                  bash -c "openssl ecparam -genkey -name secp256k1 | openssl ec -out ${alias}.pem" > /dev/null
+                docker exec ${CONTAINER_NAME} \
+                    seth account import ${alias}.pem ${alias} > /dev/null
+                docker exec ${CONTAINER_NAME} \
+                    seth account create --nonce=0 --wait ${alias}
 
     - id: sawtooth-seth-rpc
       description: |
@@ -909,7 +935,9 @@ brooklyn.catalog:
                 -p 3030:3030 \
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
-                /bin/seth-rpc --connect tcp://${NODE}.${NETWORK}:4004
+                /bin/seth-rpc \
+                  --bind 0.0.0.0:3030 \
+                  --connect tcp://${NODE}.${NETWORK}:4004
 
     - id: influxdb
       description: |
@@ -1045,7 +1073,7 @@ brooklyn.catalog:
               command: |
                 echo "${key}" | sudo tee -a data/${filename}.priv
                 docker exec \
-                    smallbank-workload \
+                    ${CONTAINER_NAME} \
                     /bin/create.sh \
                       /data/${filename}.priv \
                       ${filename} \
@@ -1067,7 +1095,7 @@ brooklyn.catalog:
                   defaultValue: 10
               command: |
                 docker exec \
-                    smallbank-workload \
+                    ${CONTAINER_NAME} \
                     /bin/submit.sh \
                       ${filename} \
                       ${endpoint} \
