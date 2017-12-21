@@ -16,6 +16,10 @@ services:
       sawtooth.network: "central"
       sawtooth.network.cidr: "10.0.0.0/22"
       sawtooth.cluster.name: "sawtooth"
+      provisioning.properties:
+        minDisk: "64g"
+        minCores: 2
+        minRam: "3g"
 
   - type: sawtooth-remote-cluster-application
     id: sawtooth-remote-cluster-one
@@ -37,6 +41,10 @@ services:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
       launch.latch:
         $brooklyn:component("sawtooth-central-cluster").attributeWhenReady("service.isUp")
+      provisioning.properties:
+        minDisk: "64g"
+        minCores: 2
+        minRam: "3g"
 
   - type: sawtooth-remote-cluster-application
     id: sawtooth-remote-cluster-two
@@ -58,3 +66,7 @@ services:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
       launch.latch:
         $brooklyn:component("sawtooth-central-cluster").attributeWhenReady("service.isUp")
+      provisioning.properties:
+        minDisk: "64g"
+        minCores: 2
+        minRam: "3g"

@@ -46,9 +46,8 @@ brooklyn.catalog:
         id: ubuntu-software-process
         brooklyn.config:
           dontRequireTtyForSudo: true
-          provisioning.properties:
-            osFamily: ubuntu
-            imageNameRegex: "xenial-16.04"
+          provisioning.properties.osFamily: ubuntu
+          provisioning.properties.imageNameRegex: "xenial-16.04"
 
     - id: sawtooth-docker-engine
       description: |
