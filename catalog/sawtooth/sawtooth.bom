@@ -236,6 +236,10 @@ brooklyn.catalog:
               - "%s-%03x"
               - $brooklyn:config("sawtooth.cluster.name")
               - $brooklyn:config("cluster.member.id")
+          displayName:
+            $brooklyn:formatString:
+              - "validator-%s"
+              - $brooklyn:config("sawtooth.node")
 
         brooklyn.children:
           - type: sawtooth-validator
@@ -578,7 +582,6 @@ brooklyn.catalog:
                       --bind component:tcp://eth0:4004 \
                       --bind network:tcp://eth0:8800 \
                       --peering dynamic \
-                      --scheduler parallel \
                       --minimum-peer-connectivity 255 \
                       --maximum-peer-connectivity 255 \
                       --opentsdb-url http://influxdb.${NETWORK}:8086 \
@@ -649,7 +652,6 @@ brooklyn.catalog:
                       --bind component:tcp://eth0:4004 \
                       --bind network:tcp://eth0:8800 \
                       --peering dynamic \
-                      --scheduler parallel \
                       --minimum-peer-connectivity 255 \
                       --maximum-peer-connectivity 255 \
                       --peers tcp://${SEED_VALIDATOR}:8800 \
@@ -953,9 +955,10 @@ brooklyn.catalog:
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 /bin/seth-rpc \
-                  --unlock brooklyn \
                   --bind 0.0.0.0:3030 \
                   --connect tcp://${NODE}.${NETWORK}:4004
+
+# TODO --unlock brooklyn
 
     - id: sawtooth-poet-validator-registry-tp
       description: |
@@ -1113,13 +1116,13 @@ brooklyn.catalog:
                   defaultValue: "sawtooth"
                 accounts:
                   description: "Number of accounts to create"
-                  defaultValue: 10
+                  defaultValue: 100
                 transactions:
                   description: "Number of transactions to create"
-                  defaultValue: 1000
+                  defaultValue: 50000
                 batches:
-                  description: "Number of batches to create"
-                  defaultValue: 10
+                  description: "Number of transactions per batch"
+                  defaultValue: 50
               command: |
                 echo "${key}" | sudo tee -a data/${filename}.priv
                 docker exec \
@@ -1142,7 +1145,7 @@ brooklyn.catalog:
                   description: "The REST API endpoint to use"
                 rate:
                   description: "Rate of transactions per second"
-                  defaultValue: 10
+                  defaultValue: 50
               command: |
                 docker exec \
                     ${CONTAINER_NAME} \
