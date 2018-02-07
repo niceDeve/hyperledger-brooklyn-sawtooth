@@ -1,5 +1,5 @@
 brooklyn.catalog:
-  version: "0.3.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
+  version: "0.4.0-SNAPSHOT" # BROOKLYN_HYPERLEDGER_SAWTOOTH_VERSION
 
   items:
     - "classpath://io.brooklyn.etcd.brooklyn-etcd:etcd/etcd.bom"
