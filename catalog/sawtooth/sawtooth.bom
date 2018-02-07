@@ -954,11 +954,12 @@ brooklyn.catalog:
                 ${VOLUMES_FROM} \
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
-                /bin/seth-rpc \
-                  --bind 0.0.0.0:3030 \
-                  --connect tcp://${NODE}.${NETWORK}:4004
-
-# TODO --unlock brooklyn
+                bash -c "\
+                  ln -s /data ~root/.sawtooth ; \
+                  /bin/seth-rpc \
+                    --bind 0.0.0.0:3030 \
+                    --connect tcp://${NODE}.${NETWORK}:4004 \
+                    --unlock brooklyn"
 
     - id: sawtooth-poet-validator-registry-tp
       description: |
@@ -987,7 +988,6 @@ brooklyn.catalog:
                 --network ${NETWORK} \
                 -d \
                 -p 4004 \
-                -p 3030:3030 \
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 poet-validator-registry-tp -v --connect tcp://${NODE}.${NETWORK}:4004
