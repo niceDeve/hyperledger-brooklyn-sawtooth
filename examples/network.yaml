@@ -39,7 +39,7 @@ services:
         $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network.cidr")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
-      launch.latch:
+      latch.launch:
         $brooklyn:component("sawtooth-central-cluster").attributeWhenReady("service.isUp")
       provisioning.properties:
         minDisk: "64g"
@@ -64,7 +64,7 @@ services:
         $brooklyn:component("sawtooth-central-cluster").config("sawtooth.network.cidr")
       openvpn.config:
         $brooklyn:component("openvpn-server").attributeWhenReady("openvpn.config")
-      launch.latch:
+      latch.launch:
         $brooklyn:component("sawtooth-central-cluster").attributeWhenReady("service.isUp")
       provisioning.properties:
         minDisk: "64g"
