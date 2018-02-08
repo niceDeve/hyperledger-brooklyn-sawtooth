@@ -843,7 +843,7 @@ brooklyn.catalog:
             $brooklyn:formatString:
               - "block-info-tp-%s"
               - $brooklyn:attributeWhenReady("entity.id")
-          image.name: "sawtooth-block-info-tp-python"
+          image.name: "sawtooth-block-info-tp"
           image.version: $brooklyn:config("sawtooth.version")
           image.repository: $brooklyn:config("sawtooth.repository")
 
@@ -912,9 +912,9 @@ brooklyn.catalog:
                 docker exec ${CONTAINER_NAME} \
                   bash -c "openssl ecparam -genkey -name secp256k1 | openssl ec -out ${alias}.pem" > /dev/null
                 docker exec ${CONTAINER_NAME} \
-                    seth account import ${alias}.pem ${alias} > /dev/null
+                  seth account import ${alias}.pem ${alias} > /dev/null
                 docker exec ${CONTAINER_NAME} \
-                    seth account create --nonce=0 --wait ${alias}
+                  seth account create --nonce=0 --wait ${alias}
 
     - id: sawtooth-seth-rpc
       description: |
