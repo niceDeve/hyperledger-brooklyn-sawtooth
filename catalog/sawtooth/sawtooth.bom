@@ -39,6 +39,10 @@ brooklyn.catalog:
             description: "Network CIDR"
             type: string
             default: "10.0.0.0/24"
+          - name: sawtooth.network.gw
+            description: "Network Gateway"
+            type: string
+            default: "10.0.0.1"
           - name: sawtooth.cluster.name
             description: "Cluster Name"
             type: string
@@ -109,12 +113,14 @@ brooklyn.catalog:
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
             SUBNET: $brooklyn:config("sawtooth.network.cidr")
+            GATEWAY: $brooklyn:config("sawtooth.network.gw")
           post.launch.command: |
-            echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
+            echo "[SAW] Setup ${NETWORK} overlay network (${SUBNET})"
             docker network ls | grep "overlay.*${NETWORK}" ||
               docker network create \
                   --driver=overlay \
                   --subnet="${SUBNET}" \
+                  --gateway="${GATEWAY}" \
                   "${NETWORK}"
 
         brooklyn.children:
@@ -372,6 +378,10 @@ brooklyn.catalog:
             description: "Network CIDR"
             type: string
             default: "10.1.0.0/24"
+          - name: sawtooth.network.gw
+            description: "Network Gateway"
+            type: string
+            default: "10.1.0.1"
           - name: sawtooth.cluster.name
             description: "Cluster Name"
             type: string
@@ -444,12 +454,14 @@ brooklyn.catalog:
           shell.env:
             NETWORK: $brooklyn:config("sawtooth.network")
             SUBNET: $brooklyn:config("sawtooth.network.cidr")
+            GATEWAY: $brooklyn:config("sawtooth.network.gw")
           post.launch.command: |
-            echo "[SAW] Setup {NETWORK} overlay network (${SUBNET})"
+            echo "[SAW] Setup ${NETWORK} overlay network (${SUBNET})"
             docker network ls | grep "overlay.*${NETWORK}" ||
               docker network create \
                   --driver=overlay \
                   --subnet="${SUBNET}" \
+                  --gateway="${GATEWAY}" \
                   "${NETWORK}"
 
         brooklyn.children:
