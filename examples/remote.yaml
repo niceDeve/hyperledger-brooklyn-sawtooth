@@ -11,7 +11,7 @@ services:
     name: "sawtooth-remote-cluster"
 
     brooklyn.config:
-      sawtooth.version: "1.0.0"
+      sawtooth.version: "1.0.2"
       sawtooth.repository: "sawtooth"
       sawtooth.size: 3
       sawtooth.network: "remote"

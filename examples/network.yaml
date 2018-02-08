@@ -10,7 +10,7 @@ services:
     location: <add-main-location-here>
 
     brooklyn.config:
-      sawtooth.version: "1.0.0"
+      sawtooth.version: "1.0.2"
       sawtooth.repository: "sawtooth"
       sawtooth.size: 9
       sawtooth.network: "central"
@@ -27,7 +27,7 @@ services:
     location: <add-remote-location-here>
 
     brooklyn.config:
-      sawtooth.version: "1.0.0"
+      sawtooth.version: "1.0.2"
       sawtooth.repository: "sawtooth"
       sawtooth.size: 4
       sawtooth.network: "remote.one"
@@ -52,7 +52,7 @@ services:
     location: <add-remote-location-here>
 
     brooklyn.config:
-      sawtooth.version: "1.0.0"
+      sawtooth.version: "1.0.2"
       sawtooth.repository: "sawtooth"
       sawtooth.size: 4
       sawtooth.network: "remote.two"
