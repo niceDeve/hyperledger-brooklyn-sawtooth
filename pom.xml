@@ -10,7 +10,7 @@
 
     <name>Brooklyn :: Hyperledger :: Sawtooth</name>
     <description>Apache Brooklyn blueprint to deploy and manage Hyperledger Sawtooth</description>
-    <url>https://github.com/cloudsoft/brooklyn-hyperledger-sawtooth</url>
+    <url>https://github.com/blockchaintp/brooklyn-hyperledger-sawtooth</url>
 
     <properties>
         <brooklyn-etcd.version>2.5.0-SNAPSHOT</brooklyn-etcd.version>
@@ -26,9 +26,9 @@
     </properties>
 
     <scm>
-        <url>https://github.com/cloudsoft/brooklyn-hyperledger-sawtooth</url>
-        <connection>scm:git:https://github.com/cloudsoft/brooklyn-hyperledger-sawtooth.git</connection>
-        <developerConnection>scm:git:git@github.com:cloudsoft/brooklyn-hyperledger-sawtooth.git</developerConnection>
+        <url>https://github.com/blockchaintp/brooklyn-hyperledger-sawtooth</url>
+        <connection>scm:git:https://github.com/blockchaintp/brooklyn-hyperledger-sawtooth.git</connection>
+        <developerConnection>scm:git:git@github.com:blockchaintp/brooklyn-hyperledger-sawtooth.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 

@@ -3,7 +3,7 @@ Brooklyn Hyperledger Sawtooth
 
 This repository contains [Apache Brooklyn](https://brooklyn.apache.org/) blueprints for a [Hyperledger Sawtooth](https://github.com/hyperledger/sawtooth-core) blockchain network, using Docker.
 
-To install the blueprints, download the Jar and BOM files for the [latest release](https://github.com/cloudsoft/brooklyn-hyperledger-sawtooth/releases/latest) and install them onto a running Brooklyn server. The `sawtooth.bom` file references the Jar archive, so check to be sure it points at the correct location on the filesystem before adding to the catalog.
+To install the blueprints, download the Jar and BOM files for the [latest release](https://github.com/blockchaintp/brooklyn-hyperledger-sawtooth/releases/latest) and install them onto a running Brooklyn server. The `sawtooth.bom` file references the Jar archive, so check to be sure it points at the correct location on the filesystem before adding to the catalog.
 
     $ mkdir lib
     $ cp sawtooth.jar lib/
@@ -34,4 +34,4 @@ The blueprint can also contain `sawtooth-remote-cluster-application` entities, t
 Once the Sawtooth network is running, check its status using the main Grafana dashboard for metrics, or access the REST API to look up raw blockchain data.
 
 ---
-Copyright 2017 Cloudsoft Corporation; Licensed under the [Apache License, Version 2.0](./LICENSE).
+Copyright 2018 Blockchain Technology Partners Limited; Licensed under the [Apache License, Version 2.0](./LICENSE).
