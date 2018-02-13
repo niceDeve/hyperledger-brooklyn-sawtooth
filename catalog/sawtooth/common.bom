@@ -69,6 +69,10 @@ brooklyn.catalog:
           - name: cluster.endpoint
             description: "Cluster Store URL"
             type: string
+          - name: network.debug
+            description: "Network Debug"
+            type: boolean
+            default: false
 
         brooklyn.config:
           shell.env:
@@ -82,6 +86,7 @@ brooklyn.catalog:
                 - "tcp://%s:%d"
                 - $brooklyn:attributeWhenReady("host.subnet.address")
                 - $brooklyn:config("docker.port")
+            DEBUG: $brooklyn:config("network.debug")
 
           install.command: |
             sudo apt-get update -y
@@ -100,6 +105,11 @@ brooklyn.catalog:
 
           post.install.command: |
             echo "[SAW] docker installed"
+            if ${DEBUG} ; then
+              sudo apt-get install -y \
+                iputils-ping iproute2 net-tools traceroute
+              echo "[SAW] machine ${HOST_ADDRESS} network debug tools installed"
+            fi
 
           customize.command: |
             sudo systemctl stop docker.service
@@ -168,10 +178,6 @@ brooklyn.catalog:
             description: "Image Repository"
             type: string
             default: "library"
-          - name: network.debug
-            description: "Network Debug"
-            type: boolean
-            default: false
           - name: container.options
             description: "Container Options"
             type: string
@@ -196,17 +202,7 @@ brooklyn.catalog:
                 - $brooklyn:config("image.name")
                 - $brooklyn:config("image.version")
             NETWORK: $brooklyn:config("sawtooth.network")
-            DEBUG: $brooklyn:config("network.debug")
             CONTAINER_OPTIONS: $brooklyn:config("container.options")
-
-          post.install.command: |
-            echo "[SAW] container ${CONTAINER_NAME} installed as ${ENTITY_ID}"
-            if ${DEBUG} ; then
-              docker exec ${CONTAINER_NAME} apt-get install -y \
-                iputils-ping \
-                iproute2
-              echo "[SAW] container ${CONTAINER_NAME} network debug tools installed"
-            fi
 
           stop.command: |
             docker rm -f ${CONTAINER_NAME}
