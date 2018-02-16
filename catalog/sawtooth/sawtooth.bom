@@ -979,6 +979,7 @@ brooklyn.catalog:
                 bash -c "\
                   ln -s /data ~root/.sawtooth ; \
                   /bin/seth-rpc \
+                    -vv \
                     --bind 0.0.0.0:3030 \
                     --connect tcp://${NODE}.${NETWORK}:4004 \
                     --unlock brooklyn"
