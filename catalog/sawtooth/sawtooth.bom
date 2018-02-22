@@ -936,7 +936,7 @@ brooklyn.catalog:
                 docker exec ${CONTAINER_NAME} \
                   seth account import ${alias}.pem ${alias} > /dev/null
                 docker exec ${CONTAINER_NAME} \
-                  seth account create --nonce=0 --wait ${alias}
+                  seth account create --nonce=1 --wait ${alias}
 
     - id: sawtooth-seth-rpc
       description: |
