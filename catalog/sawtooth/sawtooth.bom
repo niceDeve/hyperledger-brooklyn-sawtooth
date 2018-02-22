@@ -977,12 +977,14 @@ brooklyn.catalog:
                 ${CONTAINER_OPTIONS} \
                 ${IMAGE} \
                 bash -c "\
-                  ln -s /data ~root/.sawtooth ; \
+                  [ -L ~root/.sawtooth ] || ln -s /data ~root/.sawtooth ; \
+                  cd /data ; \
+                  accounts=\$(ls *.pem | cut -d. -f1 | paste -d\  -s -)
                   /bin/seth-rpc \
                     -vv \
                     --bind 0.0.0.0:3030 \
                     --connect tcp://${NODE}.${NETWORK}:4004 \
-                    --unlock brooklyn"
+                    --unlock \$accounts"
 
     - id: sawtooth-poet-validator-registry-tp
       description: |
