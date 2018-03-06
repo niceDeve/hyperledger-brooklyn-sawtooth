@@ -52,6 +52,9 @@ brooklyn.catalog:
           - type: etcd-node
             name: "etcd-node"
             id: etcd-node
+            brooklyn.config:
+              pre.install.command: |
+                sudo yum update -y nss nss-util nspr curl
           - type: sawtooth-server-node
             name: "sawtooth-server-node"
             id: sawtooth-server-node
