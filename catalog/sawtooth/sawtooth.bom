@@ -967,6 +967,7 @@ brooklyn.catalog:
               $brooklyn:formatString:
                 - "--volumes-from %s"
                 - $brooklyn:config("sawtooth.seth-tp")
+            SETH_TP: $brooklyn:config("sawtooth.seth-tp")
 
           launch.command: |
             docker run \
@@ -987,6 +988,7 @@ brooklyn.catalog:
                     -vv \
                     --bind 0.0.0.0:3030 \
                     --connect tcp://${NODE}.${NETWORK}:4004 \
+                    --process tcp://${SETH_TP}.${NETWORK}:4004 \
                     --unlock \$accounts"
 
     - id: sawtooth-poet-validator-registry-tp
