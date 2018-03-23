@@ -14,7 +14,7 @@ brooklyn.catalog:
       iconUrl: "classpath://io.brooklyn.hyperledger.sawtooth:icon/sawtooth.png"
       item:
         type: org.apache.brooklyn.entity.stock.BasicApplication
-        name: "sawtooth-cluster-application"
+        name: "sawtooth-standalone-server-application"
 
         brooklyn.parameters:
           - name: sawtooth.version
