@@ -27,7 +27,7 @@ brooklyn.catalog:
             name: "sawtooth-cluster-application"
 
             brooklyn.config:
-              sawtooth.version: "1.0.2"
+              sawtooth.version: "1.0.3"
               sawtooth.repository: "sawtooth"
               sawtooth.size: 4
               sawtooth.network: "sawtooth"
@@ -49,7 +49,7 @@ brooklyn.catalog:
             name: "sawtooth-remote-cluster-application"
 
             brooklyn.config:
-              sawtooth.version: "1.0.2"
+              sawtooth.version: "1.0.3"
               sawtooth.repository: "sawtooth"
               sawtooth.size: 3
               sawtooth.network: "remote"
@@ -72,6 +72,6 @@ brooklyn.catalog:
             name: "sawtooth-workload-application"
 
             brooklyn.config:
-              sawtooth.version: "1.0.2"
+              sawtooth.version: "1.0.3"
               sawtooth.repository: "sawtooth"
               sawtooth.network: "sawtooth"
