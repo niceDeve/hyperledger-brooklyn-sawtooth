@@ -209,7 +209,6 @@ brooklyn.catalog:
             IMAGE_NAME: $brooklyn:config("image.name")
             IMAGE_VERSION: $brooklyn:config("image.version")
             REPO_NAME: $brooklyn:config("image.repository")
-            IMAGE_VERSION: $brooklyn:config("image.version")
             IMAGE:
               $brooklyn:formatString:
                 - "%s/%s:%s"
@@ -218,6 +217,9 @@ brooklyn.catalog:
                 - $brooklyn:config("image.version")
             NETWORK: $brooklyn:config("sawtooth.network")
             CONTAINER_OPTIONS: $brooklyn:config("container.options")
+
+          pre.launch.command: |
+            docker pull ${IMAGE}
 
           stop.command: |
             docker rm -f ${CONTAINER_NAME}
