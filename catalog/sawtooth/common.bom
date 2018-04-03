@@ -200,6 +200,7 @@ brooklyn.catalog:
         brooklyn.config:
           shell.env:
             ENTITY_ID: $brooklyn:attributeWhenReady("entity.id")
+            HOST_ADDRESS: $brooklyn:attributeWhenReady("host.address")
             DOCKER_HOST:
               $brooklyn:formatString:
                 - "tcp://%s:%d"
