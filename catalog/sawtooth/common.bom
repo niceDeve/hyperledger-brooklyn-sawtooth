@@ -226,4 +226,5 @@ brooklyn.catalog:
             docker rm -f ${CONTAINER_NAME}
 
           checkRunning.command: |
-            docker inspect -f {{.State.Running}} ${CONTAINER_NAME}
+            status=$(docker inspect -f {{.State.Status}} ${CONTAINER_NAME})
+            [ "${status}" == "running" ]
