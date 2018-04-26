@@ -13,7 +13,7 @@
     <url>https://github.com/blockchaintp/brooklyn-hyperledger-sawtooth</url>
 
     <properties>
-        <brooklyn-etcd.version>2.5.0-SNAPSHOT</brooklyn-etcd.version>
+        <brooklyn-etcd.version>2.7.0-SNAPSHOT</brooklyn-etcd.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -76,6 +76,11 @@
                 <filtering>false</filtering>
             </resource>
         </resources>
+        <testResources>
+            <testResource>
+                <directory>tests/common</directory>
+            </testResource>
+        </testResources>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -128,6 +133,22 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+              <artifactId>maven-jar-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>test-jar-creation</id>
+                  <goals>
+                    <goal>test-jar</goal>
+                  </goals>
+                  <configuration>
+                    <archive>
+                      <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                  </configuration>
+                </execution>
+              </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
